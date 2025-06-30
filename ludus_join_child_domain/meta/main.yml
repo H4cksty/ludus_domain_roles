@@ -1,0 +1,32 @@
+# =======================================================================
+# File: ludus_join_child_domain/meta/main.yml
+# =======================================================================
+---
+galaxy_info:
+  role_name: ludus_join_child_domain
+  author: Matt Hasty
+  company: kfivefour
+  description: Joins a machine to a child domain created with the ludus_create_child_domain role.
+  license: MIT
+  min_ansible_version: "2.9"
+  platforms:
+    - name: Windows
+      versions:
+        - "2016"
+        - "2019"
+        - "2022"
+        - "10"
+        - "11"
+  galaxy_tags:
+    - windows
+    - security
+    - active_directory
+    - server
+    - ludus
+
+dependencies: []
+
+collections:
+  - microsoft.ad
+  - ansible.windows
+  - community.windows
