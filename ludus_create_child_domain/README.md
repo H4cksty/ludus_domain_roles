@@ -41,15 +41,11 @@ ludus:
     roles:
       - name: ludus_create_child_domain
         depends_on:
-          - vm_name: "{{ range_id }}-CHILD-DC1"
-            role: "ludus-ad-content"          # This could be any arbitrary role assigned to your Primary Parent DC, it just needs _something_ to depend on.
+          - vm_name: "{{ range_id }}-PARENT-DC1"
+            role: "ludus_verify_dc_ready"
     role_vars:
-      # Variables for the role to create the domain
       dns_domain_name: "child.parent.local"
       parent_ea_user: "parent\\domainadmin" # Enterprise Admin from PARENT domain
       parent_ea_password: "password"
       parent_dc_ip: "10.2.10.10"
-      current_host_ip: "10.2.20.10"
-      # The role will now use the variables from the 'defaults' block above
-      # to create the domainadmin and domainuser accounts automatically.
 ```
