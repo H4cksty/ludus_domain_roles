@@ -27,7 +27,7 @@ defaults:
   ad_domain_safe_mode_password: "YourComplexPassword!"
 
 ludus:
-  # ... parent DC for parent.local is defined here ...
+  # ... parent DC for ershon.local is defined here ...
 
   - vm_name: "{{ range_id }}-CHILD-DC1"
     hostname: "CHILD-DC1"
@@ -45,7 +45,6 @@ ludus:
             role: "ludus_verify_dc_ready"
     role_vars:
       dns_domain_name: "child.parent.local"
-      parent_ea_user: "parent\\domainadmin" # Enterprise Admin from PARENT domain
-      parent_ea_password: "password"
+      parent_domain_netbios_name: "PARENT" # The NETBIOS name of the PARENT domain
       parent_dc_ip: "10.2.10.10"
 ```
