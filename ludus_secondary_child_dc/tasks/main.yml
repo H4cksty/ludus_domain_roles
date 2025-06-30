@@ -1,0 +1,30 @@
+# =======================================================================
+# File: ludus_secondary_child_dc/tasks/main.yml
+# =======================================================================
+---
+- name: Wait for the Primary Child DC to be ready for authentication
+  ansible.windows.win_wait_for:
+    host: "{{ existing_dc_ip }}"
+    port: 389 # check for LDAP so we know DC services are running
+    timeout: 300 # wait up to 5 minutes
+  delegate_to: localhost
+
+- name: Set DNS client to point to the existing Primary Child DC
+  win_dns_client:
+    adapter_names: "*"
+    dns_servers:
+      - "{{ existing_dc_ip }}"
+
+- name: Promote to additional Domain Controller in existing domain
+  microsoft.ad.domain_controller:
+    dns_domain_name: "{{ dns_domain_name }}"
+    # Construct the username from inherited variables for reliability
+    domain_admin_user: "{{ parent_domain_netbios_name }}\\{{ ad_domain_admin }}"
+    domain_admin_password: "{{ ad_domain_admin_password }}"
+    safe_mode_password: "{{ ad_domain_safe_mode_password }}"
+    install_dns: "{{ install_dns }}"
+    state: domain_controller
+
+- name: Reboot the server after domain promotion
+  ansible.windows.win_reboot:
+  when: reboot
