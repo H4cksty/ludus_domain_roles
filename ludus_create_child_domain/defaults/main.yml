@@ -8,10 +8,8 @@
 
 # Variables for domain creation
 dns_domain_name: ""
-parent_ea_user: ""
-parent_ea_password: ""
+parent_domain_netbios_name: ""
 parent_dc_ip: ""
-current_host_ip: ""
 create_dns_delegation: true
 domain_mode: "WinThreshold"
 reboot: true
