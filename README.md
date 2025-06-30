@@ -42,7 +42,7 @@ To use these roles, clone this repository into a directory on your local machine
 
 ```bash
 # Example for one role
-git clone [https://github.com/H4cksty/ludus_forest_build_roles.git](https://github.com/H4cksty/ludus_forest_build_roles.git)
+git clone https://github.com/H4cksty/ludus_forest_build_roles.git
 cd ludus_forest_build_roles
 ludus ansible role add -d ./ludus_create_child_domain
 ludus ansible role add -d ./ludus_secondary_child_dc
@@ -72,10 +72,10 @@ defaults:
   ad_domain_functional_level: Win2012R2
   ad_forest_functional_level: Win2012R2
   ad_domain_admin: domainadmin
-  ad_domain_admin_password: "YourComplexPassword!"
+  ad_domain_admin_password: "password"
   ad_domain_user: domainuser
-  ad_domain_user_password: "AnotherPassword!"
-  ad_domain_safe_mode_password: "YourComplexPassword!"
+  ad_domain_user_password: "password"
+  ad_domain_safe_mode_password: "YourComplexPassword!"  # ludus_secondary_child_dc will likely fail if a complex password is not used here
   timezone: America/Chicago
 
 ludus:
