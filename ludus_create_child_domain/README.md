@@ -1,6 +1,6 @@
 # ludus_create_child_domain
 
-## Ansible role to create a new child domain and its first domain controller.
+Ansible role to create a new child domain and its first domain controller.
 
 ## Description
 This role automates the creation of a new child domain within an existing Active Directory forest. It performs the following actions:
