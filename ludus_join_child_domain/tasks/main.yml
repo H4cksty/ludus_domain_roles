@@ -1,0 +1,50 @@
+# =======================================================================
+# File: ludus_join_child_domain/tasks/main.yml
+# =======================================================================
+---
+- name: Wait for the Domain Controller to be ready for authentication
+  ansible.windows.win_wait_for:
+    host: "{{ dc_ip }}"
+    port: 389 # check for LDAP so we know DC services are running
+    timeout: 300 # wait up to 5 minutes
+  delegate_to: localhost
+
+- name: Configure DNS to the child domain controller's ip address
+  win_dns_client:
+    adapter_names: "*"
+    ipv4_addresses:
+      - "{{ dc_ip }}"
+
+- name: Attempt to domain join the machine into the child domain
+  block:
+    - name: Domain join the machine into the child domain
+      microsoft.ad.membership:
+        dns_domain_name: "{{ dns_domain_name }}"
+        domain_admin_user: "{{ ad_domain_admin }}"
+        domain_admin_password: "{{ ad_domain_admin_password }}"
+        state: domain
+        reboot: true
+      register: domain_join_result
+      until: domain_join_result is succeeded
+      retries: 10
+      delay: 60
+      ignore_errors: yes
+
+  rescue:
+    - name: Domain join failed after retries
+      ansible.builtin.fail:
+        msg: "Domain join failed after multiple retries"
+      when: domain_join_result is defined and domain_join_result.failed
+
+- name: Install RSAT AD Tools on Server OS only
+  win_feature:
+    name: "RSAT-ADDS"
+    state: present
+    include_management_tools: true
+  when: "'Server' in ansible_distribution"
+
+- name: Enforce correct DNS configuration after any reboots
+  win_dns_client:
+    adapter_names: "*"
+    ipv4_addresses:
+      - "{{ dc_ip }}"
