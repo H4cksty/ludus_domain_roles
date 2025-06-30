@@ -7,13 +7,13 @@
     adapter_names: "*"
     ipv4_addresses:
       - "{{ parent_dc_ip }}"
-      - "{{ current_host_ip }}"
+      - "{{ ansible_host }}" # Use the built-in variable for the current host's IP
 
 - name: Create a child domain
   microsoft.ad.domain_child:
     dns_domain_name: "{{ dns_domain_name }}"
-    domain_admin_user: "{{ parent_ea_user }}"
-    domain_admin_password: "{{ parent_ea_password }}"
+    domain_admin_user: "{{ parent_domain_netbios_name }}\\{{ ad_domain_admin }}"
+    domain_admin_password: "{{ ad_domain_admin_password }}"
     safe_mode_password: "{{ ad_domain_safe_mode_password }}"
     create_dns_delegation: "{{ create_dns_delegation }}"
     domain_mode: "{{ domain_mode }}"
