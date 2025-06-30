@@ -1,0 +1,16 @@
+# =======================================================================
+# File: ludus_secondary_child_dc/defaults/main.yml
+# =======================================================================
+---
+# Defaults for ludus_secondary_child_dc.
+# These should be set in the main ludus-config.yml
+dns_domain_name: ""
+parent_domain_netbios_name: ""
+existing_dc_ip: ""
+install_dns: true
+reboot: true
+
+# These will be inherited from the Ludus range defaults
+ad_domain_admin: ""
+ad_domain_admin_password: ""
+ad_domain_safe_mode_password: ""
