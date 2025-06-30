@@ -1,6 +1,6 @@
 # ludus_join_child_domain
 
-## Ansible role to join a machine to a child domain created by the `ludus_create_child_domain` Ansible role.
+Ansible role to join a machine to a child domain created by the `ludus_create_child_domain` Ansible role.
 
 ## Description
 This role automates joining a Windows machine to an existing child domain. It is designed to work in tandem with the `ludus_create_child_domain` role, which creates the necessary `domainadmin` user account.
