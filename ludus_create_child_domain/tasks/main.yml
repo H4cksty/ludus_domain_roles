@@ -1,0 +1,41 @@
+# =======================================================================
+# File: ludus_create_child_domain/tasks/main.yml
+# =======================================================================
+---
+- name: Configure DNS to include parent dc ip
+  win_dns_client:
+    adapter_names: "*"
+    ipv4_addresses:
+      - "{{ parent_dc_ip }}"
+      - "{{ current_host_ip }}"
+
+- name: Create a child domain
+  microsoft.ad.domain_child:
+    dns_domain_name: "{{ dns_domain_name }}"
+    domain_admin_user: "{{ parent_ea_user }}"
+    domain_admin_password: "{{ parent_ea_password }}"
+    safe_mode_password: "{{ ad_domain_safe_mode_password }}"
+    create_dns_delegation: "{{ create_dns_delegation }}"
+    domain_mode: "{{ domain_mode }}"
+    reboot: "{{ reboot }}"
+    install_dns: "{{ install_dns }}"
+
+# After the reboot from the previous task, the machine is a DC.
+# Now, create the standard Ludus user accounts.
+
+- name: Create the 'domainadmin' user
+  microsoft.ad.user:
+    name: "{{ ad_domain_admin }}"
+    password: "{{ ad_domain_admin_password }}"
+    groups:
+      - "Domain Admins"
+    state: present
+
+- name: Create the 'domainuser' user
+  microsoft.ad.user:
+    name: "{{ ad_domain_user }}"
+    password: "{{ ad_domain_user_password }}"
+    groups:
+      - "Domain Users"
+      - "Remote Desktop Users"
+    state: present
