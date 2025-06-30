@@ -1,0 +1,11 @@
+# =======================================================================
+# File: ludus_join_child_domain/defaults/main.yml
+# =======================================================================
+---
+# Defaults for the ludus_join_child_domain role.
+# These variables should be set in the main ludus-config.yml
+# either in the 'defaults' block or the VM's 'role_vars'.
+dc_ip: ""
+dns_domain_name: ""
+ad_domain_admin: ""
+ad_domain_admin_password: ""
