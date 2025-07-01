@@ -23,5 +23,4 @@ galaxy_info:
 
 dependencies: []
 
-collections:
-  - ansible.windows
+collections: []
