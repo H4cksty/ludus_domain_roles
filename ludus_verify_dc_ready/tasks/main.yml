@@ -3,7 +3,7 @@
 # =======================================================================
 ---
 - name: Wait for the Domain Controller to be ready for authentication
-  ansible.windows.win_wait_for:
+  ansible.builtin.wait_for:
     # Uses the IP address Ansible is using for the current host.
     host: "{{ ansible_host }}"
     port: 389 # Standard LDAP port, indicates AD services are running.
