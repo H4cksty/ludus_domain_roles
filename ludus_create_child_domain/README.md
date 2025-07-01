@@ -40,11 +40,9 @@ ludus:
           - vm_name: "{{ range_id }}-PARENT-DC1"
             role: "ludus_verify_dc_ready"
     role_vars:
-      # The role_vars block is now more explicit.
       dns_domain_name: "child.parent.local"
       parent_ea_user: "PARENT\\domainadmin"
       parent_ea_password: "YourComplexPassword!"
       safe_mode_password: "YourComplexPassword!" # This is now a required role_var
       parent_dc_ip: "10.2.10.10"
-      # The role will now use variables from the 'defaults' block to create users.
 ```
