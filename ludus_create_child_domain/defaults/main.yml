@@ -13,7 +13,7 @@ parent_ea_password: ""
 safe_mode_password: "" # This is now a required variable
 parent_dc_ip: ""
 create_dns_delegation: true
-domain_mode: "Win2012R"
+domain_mode: "Win2012R2"
 reboot: true
 install_dns: true
 
