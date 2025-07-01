@@ -21,10 +21,10 @@ This role uses the parent domain's Enterprise Admin credentials for the initial 
 defaults:
   # ... other defaults
   ad_domain_admin: domainadmin
-  ad_domain_admin_password: "password"
+  ad_domain_admin_password: "YourComplexPassword!"
   ad_domain_user: domainuser
-  ad_domain_user_password: "password"
-  ad_domain_safe_mode_password: "YourComplexPassword!"
+  ad_domain_user_password: "AnotherPassword!"
+  # Note: The safe_mode_password is now passed directly to the role.
 
 ludus:
   # ... parent DC for ershon.local is defined here ...
@@ -34,17 +34,17 @@ ludus:
     template: win2019-server-x64-template
     vlan: 20
     ip_last_octet: 10
-    ram_gb: 8
-    cpus: 4
-    windows:
-      sysprep: true
     roles:
       - name: ludus_create_child_domain
         depends_on:
           - vm_name: "{{ range_id }}-PARENT-DC1"
             role: "ludus_verify_dc_ready"
     role_vars:
+      # The role_vars block is now more explicit.
       dns_domain_name: "child.parent.local"
-      parent_domain_netbios_name: "PARENT" # The NETBIOS name of the PARENT domain
+      parent_ea_user: "PARENT\\domainadmin"
+      parent_ea_password: "YourComplexPassword!"
+      safe_mode_password: "YourComplexPassword!" # This is now a required role_var
       parent_dc_ip: "10.2.10.10"
+      # The role will now use variables from the 'defaults' block to create users.
 ```
