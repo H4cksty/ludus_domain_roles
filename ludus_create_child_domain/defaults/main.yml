@@ -8,10 +8,12 @@
 
 # Variables for domain creation
 dns_domain_name: ""
-parent_domain_netbios_name: ""
+parent_ea_user: ""
+parent_ea_password: ""
+safe_mode_password: "" # This is now a required variable
 parent_dc_ip: ""
 create_dns_delegation: true
-domain_mode: "WinThreshold"
+domain_mode: "Win2012R"
 reboot: true
 install_dns: true
 
@@ -20,4 +22,3 @@ ad_domain_admin: ""
 ad_domain_admin_password: ""
 ad_domain_user: ""
 ad_domain_user_password: ""
-ad_domain_safe_mode_password: ""
