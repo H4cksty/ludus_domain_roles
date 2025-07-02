@@ -25,7 +25,6 @@ ludus:
     role_vars:
       dc_ip: "10.2.20.10"
       dns_domain_name: "child1.parent.local"
-      child_domain_netbios_name: "CHILD1"
-      ad_domain_admin: *domain_admin_user
-      ad_domain_admin_password: *simple_password
+      domain_admin_user: "{{ domain_admin_user }}@{{ dns_domain_name }}"
+      domain_admin_password: *simple_password
 ```
