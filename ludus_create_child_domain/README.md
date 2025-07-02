@@ -24,7 +24,7 @@ defaults:
   ad_domain_user_password: "password"
 
 ludus:
-  # ... parent DC for ershon.local is defined here ...
+  # ... parent DC is defined prior to this ...
 
   - vm_name: "{{ range_id }}-CHILD-DC1"
     hostname: "CHILD-DC1"
@@ -37,7 +37,6 @@ ludus:
           - vm_name: "{{ range_id }}-PARENT-DC1"
             role: "ludus_verify_dc_ready"
     role_vars:
-      # The role_vars block is now more explicit.
       dns_domain_name: "child.parent.local"
       parent_ea_user: "PARENT\\domainadmin"
       parent_ea_password: "password" # Password for the parent domain admin
