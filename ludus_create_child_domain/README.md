@@ -21,9 +21,9 @@ This role uses the parent domain's Enterprise Admin credentials for the initial 
 defaults:
   # ... other defaults
   ad_domain_admin: domainadmin
-  ad_domain_admin_password: "YourComplexPassword!"
+  ad_domain_admin_password: "password"
   ad_domain_user: domainuser
-  ad_domain_user_password: "AnotherPassword!"
+  ad_domain_user_password: "password"
   ad_domain_safe_mode_password: "YourComplexPassword!"
 
 ludus:
