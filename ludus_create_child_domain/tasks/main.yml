@@ -29,7 +29,7 @@
     password: "{{ ad_domain_admin_password }}"
     groups:
       - "Domain Admins"
-      - "Schema Admins"
+      - "Administrators"
     state: present
 
 - name: Create the 'domainuser' user
