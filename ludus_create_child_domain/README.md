@@ -8,38 +8,34 @@ This role automates the creation of a new child domain within an existing Active
 2.  Creates a `domainadmin` user with administrative privileges in the new child domain.
 3.  Creates a standard `domainuser` in the new child domain.
 
-## WARNING
-This role requires explicit credentials to be passed via `role_vars`.
+## IMPORTANT
+This role requires all variables to be passed explicitly via `role_vars`. It is designed to be used with a `global-vars` block and YAML anchors in your main `ludus-config.yml` for clarity and consistency.
 
 ## Example
 
 ```yaml
 # In your main ludus-config.yml
-
-defaults:
-  # These are still used by the user creation part of the role
-  ad_domain_admin: domainadmin
-  ad_domain_admin_password: "password"
-  ad_domain_user: domainuser
-  ad_domain_user_password: "password"
+global-vars:
+  complex_password: &complex_password "YourComplexPassword!"
+  simple_password: &simple_password "password"
+  domain_admin_user: &domain_admin_user "domainadmin"
+  domain_user_user: &domain_user_user "domainuser"
+  parent_netbios: &parent_netbios "PARENT"
+  parent_dc_ip: &parent_dc_ip "10.2.10.10"
 
 ludus:
-  # ... parent DC is defined prior to this ...
-
   - vm_name: "{{ range_id }}-CHILD-DC1"
-    hostname: "CHILD-DC1"
-    template: win2019-server-x64-template
-    vlan: 20
-    ip_last_octet: 10
     roles:
       - name: ludus_create_child_domain
         depends_on:
-          - vm_name: "{{ range_id }}-PARENT-DC1"
-            role: "ludus_verify_dc_ready"
+          - { vm_name: "{{ range_id }}-PARENT-DC1", role: "ludus_verify_dc_ready" }
     role_vars:
       dns_domain_name: "child.parent.local"
-      parent_ea_user: "PARENT\\domainadmin"
-      parent_ea_password: "password" # Password for the parent domain admin
-      safe_mode_password: "YourComplexPassword!" # Must meet complexity requirements
-      parent_dc_ip: "10.2.10.10"
+      parent_domain_netbios_name: *parent_netbios
+      parent_dc_ip: *parent_dc_ip
+      ad_domain_admin: *domain_admin_user
+      ad_domain_admin_password: *simple_password
+      ad_domain_user: *domain_user_user
+      ad_domain_user_password: *simple_password
+      ad_domain_safe_mode_password: *complex_password
 ```
