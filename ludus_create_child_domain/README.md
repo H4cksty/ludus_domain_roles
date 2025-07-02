@@ -21,9 +21,9 @@ This role uses the parent domain's Enterprise Admin credentials for the initial 
 defaults:
   # ... other defaults
   ad_domain_admin: domainadmin
-  ad_domain_admin_password: "password"
+  ad_domain_admin_password: "YourComplexPassword!"
   ad_domain_user: domainuser
-  ad_domain_user_password: "password"
+  ad_domain_user_password: "AnotherPassword!"
   ad_domain_safe_mode_password: "YourComplexPassword!"
 
 ludus:
@@ -40,7 +40,9 @@ ludus:
           - vm_name: "{{ range_id }}-PARENT-DC1"
             role: "ludus_verify_dc_ready"
     role_vars:
+      # The role_vars block is now much simpler.
       dns_domain_name: "child.parent.local"
       parent_domain_netbios_name: "PARENT"
       parent_dc_ip: "10.2.10.10"
+      # The role will use variables from the 'defaults' block automatically.
 ```
