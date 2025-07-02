@@ -7,7 +7,7 @@
     adapter_names: "*"
     ipv4_addresses:
       - "{{ parent_dc_ip }}"
-      - "{{ ansible_host }}" # Use built-in variable for the current host's IP
+      - "{{ ansible_host }}"
 
 - name: Create a child domain
   microsoft.ad.domain_child:
