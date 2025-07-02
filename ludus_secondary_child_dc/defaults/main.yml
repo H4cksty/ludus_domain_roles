@@ -3,12 +3,11 @@
 # =======================================================================
 ---
 # All variables for this role are expected to be passed via role_vars.
-dns_domain_name: ""
-parent_domain_netbios_name: ""
 existing_dc_ip: ""
-ad_domain_admin: ""
-ad_domain_admin_password: ""
-ad_domain_safe_mode_password: ""
+dns_domain_name: ""
+domain_admin_user: ""
+domain_admin_password: ""
+safe_mode_password: ""
 
 install_dns: true
 reboot: true
