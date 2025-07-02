@@ -4,7 +4,6 @@
 ---
 # All variables for this role are expected to be passed via role_vars.
 dc_ip: ""
-dns_domain_name: ""
-child_domain_netbios_name: ""
-ad_domain_admin: ""
-ad_domain_admin_password: ""
+dns_domain_name: ""    # format user@child.parent.local
+domain_admin_user: ""
+domain_admin_password: ""
