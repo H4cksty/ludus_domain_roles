@@ -38,16 +38,25 @@ Joins a Windows workstation or member server to a child domain created by the `l
 
 ## Installation
 
-To use these roles, clone this repository into a directory on your local machine. Then, for each role, use the `ludus ansible role add` command to upload it to your Ludus user environment.
+To use these roles, copy and paste the following single command into your bash terminal. It will clone the repository, navigate into the new directory, and automatically find and install all roles for your Ludus user.
 
 ```bash
-# Example for one role
-git clone https://github.com/H4cksty/ludus_forest_build_roles.git
-cd ludus_forest_build_roles
-ludus ansible role add -d ./ludus_create_child_domain
-ludus ansible role add -d ./ludus_secondary_child_dc
-# ... and so on for the other roles
+git clone [https://github.com/H4cksty/ludus_forest_build_roles.git](https://github.com/H4cksty/ludus_forest_build_roles.git) && cd ludus_forest_build_roles && for d in ludus_*; do if [ -d "$d" ]; then ludus ansible role add -d "./$d"; fi; done
 ```
+
+Alternatively, you can download the `install_roles.sh` script from this repository and execute it.
+
+---
+
+## Acknowledgements
+
+The foundational concepts for several of these roles were inspired by the excellent work done by **[ChoiSG](https://github.com/ChoiSG/ludus_ansible_roles)**.
+
+The roles in this repository represent a significant refactoring and expansion of that original work. They have been re-engineered to be a cohesive and integrated collection, with a strong focus on:
+
+* **Consistency:** Standardized variable names and logic across all roles.
+* **Ludus Integration:** Deep integration with the Ludus `defaults` block to reduce user error and simplify `ludus-config.yml` files.
+* **Robustness:** Added features like readiness checks and conditional logic to prevent race conditions and ensure reliable deployments across different environments.
 
 ---
 
@@ -75,7 +84,9 @@ defaults:
   ad_domain_admin_password: "password"
   ad_domain_user: domainuser
   ad_domain_user_password: "password"
-  ad_domain_safe_mode_password: "YourComplexPassword!"  # ludus_secondary_child_dc will likely fail if a complex password is not used here
+  # IMPORTANT: This password MUST meet complexity requirements (uppercase, lowercase,
+  # number, symbol) for the ludus_secondary_child_dc role to succeed.
+  ad_domain_safe_mode_password: "YourComplexPassword!"
   timezone: America/Chicago
 
 ludus:
@@ -134,13 +145,11 @@ ludus:
     ip_last_octet: 10
     ram_gb: 4
     cpus: 2
-    windows:
-      sysprep: true
+    windows: { sysprep: true }
     roles:
       - name: ludus_create_child_domain
         depends_on:
-          - vm_name: "{{ range_id }}-PARENT-DC1"
-            role: "ludus_verify_dc_ready"
+          - { vm_name: "{{ range_id }}-PARENT-DC1", role: "ludus_verify_dc_ready" }
     role_vars:
       dns_domain_name: "child1.parent.local"
       parent_domain_netbios_name: "PARENT"
@@ -153,16 +162,15 @@ ludus:
     ip_last_octet: 100
     ram_gb: 4
     cpus: 2
-    windows:
-      sysprep: true
+    windows: { sysprep: true }
     roles:
       - name: ludus_join_child_domain
         depends_on:
-          - vm_name: "{{ range_id }}-CHILD1-DC1"
-            role: "ludus_create_child_domain"
+          - { vm_name: "{{ range_id }}-CHILD1-DC1", role: "ludus_create_child_domain" }
     role_vars:
       dc_ip: "10.2.20.10"
       dns_domain_name: "child1.parent.local"
+      child_domain_netbios_name: "CHILD1"
 
   # =======================================================================
   # CHILD DOMAIN 2: child2.parent.local (VLAN 30)
@@ -174,13 +182,11 @@ ludus:
     ip_last_octet: 10
     ram_gb: 4
     cpus: 2
-    windows:
-      sysprep: true
+    windows: { sysprep: true }
     roles:
       - name: ludus_create_child_domain
         depends_on:
-          - vm_name: "{{ range_id }}-PARENT-DC1"
-            role: "ludus_verify_dc_ready"
+          - { vm_name: "{{ range_id }}-PARENT-DC1", role: "ludus_verify_dc_ready" }
     role_vars:
       dns_domain_name: "child2.parent.local"
       parent_domain_netbios_name: "PARENT"
@@ -193,13 +199,11 @@ ludus:
     ip_last_octet: 11
     ram_gb: 4
     cpus: 2
-    windows:
-      sysprep: true
+    windows: { sysprep: true }
     roles:
       - name: ludus_secondary_child_dc
         depends_on:
-          - vm_name: "{{ range_id }}-CHILD2-DC1"
-            role: "ludus_create_child_domain"
+          - { vm_name: "{{ range_id }}-CHILD2-DC1", role: "ludus_create_child_domain" }
     role_vars:
       dns_domain_name: "child2.parent.local"
       parent_domain_netbios_name: "PARENT"
@@ -212,13 +216,12 @@ ludus:
     ip_last_octet: 50
     ram_gb: 4
     cpus: 2
-    windows:
-      sysprep: true
+    windows: { sysprep: true }
     roles:
       - name: ludus_join_child_domain
         depends_on:
-          - vm_name: "{{ range_id }}-CHILD2-DC1"
-            role: "ludus_create_child_domain"
+          - { vm_name: "{{ range_id }}-CHILD2-DC1", role: "ludus_create_child_domain" }
     role_vars:
       dc_ip: "10.2.30.10"
       dns_domain_name: "child2.parent.local"
+      child_domain_netbios_name: "CHILD2"
