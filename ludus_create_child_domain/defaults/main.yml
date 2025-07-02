@@ -3,21 +3,22 @@
 # =======================================================================
 ---
 # Defaults for ludus_create_child_domain.
-# These variables should be set in the main ludus-config.yml
-# either in the 'defaults' block or the VM's 'role_vars'.
 
-# Variables for domain creation
+# Variables for domain creation (MUST be set in role_vars)
 dns_domain_name: ""
-parent_domain_netbios_name: ""
+parent_ea_user: ""
+parent_ea_password: ""
+safe_mode_password: ""
 parent_dc_ip: ""
+
+# Other role settings
 create_dns_delegation: true
 domain_mode: "Win2012R2"
 reboot: true
 install_dns: true
 
-# Variables for user creation (to be inherited from Ludus defaults)
-ad_domain_admin: ""
-ad_domain_admin_password: ""
-ad_domain_user: ""
-ad_domain_user_password: ""
-ad_domain_safe_mode_password: ""
+# Variables for user creation (inherited from Ludus defaults)
+ad_domain_admin: "domainadmin"
+ad_domain_admin_password: "password"
+ad_domain_user: "domainuser"
+ad_domain_user_password: "password"
