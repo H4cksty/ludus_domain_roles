@@ -38,9 +38,8 @@ ludus:
           - vm_name: "{{ range_id }}-CHILD2-DC1"
             role: "ludus_create_child_domain"
     role_vars:
-      # CORRECTED: The role_vars block is now much simpler.
       dns_domain_name: "child2.parent.local"
       parent_domain_netbios_name: "PARENT" # The NETBIOS name of the PARENT domain
       existing_dc_ip: "10.2.30.10" # IP of the PRIMARY child DC
-      # Credentials are now correctly inherited from defaults.
+      # Credentials are inherited from defaults.
 ```
