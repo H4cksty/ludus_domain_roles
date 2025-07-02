@@ -3,7 +3,7 @@
 # =======================================================================
 ---
 - name: Wait for the Primary Child DC to be ready for authentication
-  ansible.windows.win_wait_for:
+  ansible.builtin.wait_for:
     host: "{{ existing_dc_ip }}"
     port: 389 # check for LDAP so we know DC services are running
     timeout: 300 # wait up to 5 minutes
@@ -18,7 +18,6 @@
 - name: Promote to additional Domain Controller in existing domain
   microsoft.ad.domain_controller:
     dns_domain_name: "{{ dns_domain_name }}"
-    # Construct the username from inherited variables for reliability
     domain_admin_user: "{{ parent_domain_netbios_name }}\\{{ ad_domain_admin }}"
     domain_admin_password: "{{ ad_domain_admin_password }}"
     safe_mode_password: "{{ ad_domain_safe_mode_password }}"
