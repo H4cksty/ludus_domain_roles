@@ -8,16 +8,17 @@
 # Variables for domain creation
 dns_domain_name: ""
 parent_dc_ip: ""
-ad_domain_safe_mode_password: ""
+domain_admin_user: ""
+safe_mode_password: ""
+domain_mode: ""
 
 # Variables for user creation
 ad_domain_admin: ""
-ad_domain_admin_password: ""
+domain_admin_password: ""
 ad_domain_user: ""
-ad_domain_user_password: ""
+domain_user_password: ""
 
 # Other role settings
 create_dns_delegation: true
-domain_mode: "Win2012R2"
-reboot: true
 install_dns: true
+reboot: true
