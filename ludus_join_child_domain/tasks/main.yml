@@ -3,7 +3,7 @@
 # =======================================================================
 ---
 - name: Wait for the Domain Controller to be ready for authentication
-  ansible.windows.win_wait_for:
+  ansible.builtin.wait_for:
     host: "{{ dc_ip }}"
     port: 389 # check for LDAP so we know DC services are running
     timeout: 300 # wait up to 5 minutes
@@ -20,7 +20,7 @@
     - name: Domain join the machine into the child domain
       microsoft.ad.membership:
         dns_domain_name: "{{ dns_domain_name }}"
-        domain_admin_user: "{{ ad_domain_admin }}"
+        domain_admin_user: "{{ child_domain_netbios_name }}\\{{ ad_domain_admin }}"
         domain_admin_password: "{{ ad_domain_admin_password }}"
         state: domain
         reboot: true
