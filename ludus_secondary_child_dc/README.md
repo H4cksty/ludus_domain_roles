@@ -18,7 +18,7 @@ This role requires Enterprise Admin credentials from the **parent domain** to au
 defaults:
   # ... other defaults
   ad_domain_admin: domainadmin
-  ad_domain_admin_password: "YourComplexPassword!"
+  ad_domain_admin_password: "password"
   ad_domain_safe_mode_password: "YourComplexPassword!"
   # ...
 
