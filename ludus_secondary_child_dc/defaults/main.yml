@@ -9,5 +9,6 @@ domain_admin_user: ""
 domain_admin_password: ""
 safe_mode_password: ""
 
+state: "domain_controller"
 install_dns: true
 reboot: true
