@@ -20,8 +20,8 @@
     - name: Domain join the machine into the child domain
       microsoft.ad.membership:
         dns_domain_name: "{{ dns_domain_name }}"
-        domain_admin_user: "{{ child_domain_netbios_name }}\\{{ ad_domain_admin }}"
-        domain_admin_password: "{{ ad_domain_admin_password }}"
+        domain_admin_user: "{{ domain_admin_user }}"
+        domain_admin_password: "{{ domain_admin_password }}"
         state: domain
         reboot: true
       register: domain_join_result
