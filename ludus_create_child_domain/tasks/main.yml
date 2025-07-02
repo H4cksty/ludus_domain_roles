@@ -12,8 +12,8 @@
 - name: Create a child domain
   microsoft.ad.domain_child:
     dns_domain_name: "{{ dns_domain_name }}"
-    domain_admin_user: "{{ ad_domain_admin }}"
-    domain_admin_password: "{{ ad_domain_admin_password }}"
+    domain_admin_user: "{{ domain_admin_user }}@{{ dns_domain_name }}"
+    domain_admin_password: "{{ domain_admin_password }}"
     safe_mode_password: "{{ ad_domain_safe_mode_password }}"
     create_dns_delegation: "{{ create_dns_delegation }}"
     domain_mode: "{{ domain_mode }}"
