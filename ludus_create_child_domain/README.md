@@ -42,10 +42,10 @@ ludus:
       dns_domain_name: "child.parent.local"
       parent_dc_ip: *parent_dc_ip
       domain_admin_user: "{{ domain_admin_user }}@{{ parent_domain }}"
+      safe_mode_password: *complex_password
+      domain_mode: *functional_level
       ad_domain_admin: *domain_admin_user
       domain_admin_password: *simple_password
       ad_domain_user: *domain_user_user
       domain_user_password: *simple_password
-      safe_mode_password: *complex_password
-      domain_mode: *functional_level
 ```
