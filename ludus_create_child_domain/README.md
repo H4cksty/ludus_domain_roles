@@ -5,13 +5,13 @@ Ansible role to create a new child domain and its first domain controller.
 ## Description
 This role automates the creation of a new child domain within an existing Active Directory forest. It performs the following actions:
 1.  Promotes the target server to a domain controller for the new child domain.
-2.  Creates a `domainadmin` user with administrative privileges.
-3.  Creates a standard `domainuser`.
+2.  Creates a `domainadmin` user with administrative privileges in the new child domain.
+3.  Creates a standard `domainuser` in the new child domain.
 
 This role is designed to integrate seamlessly with the `defaults` block of your `ludus-config.yml`. It will use the values for `ad_domain_admin`, `ad_domain_admin_password`, etc., that you have defined globally for your range.
 
 ## WARNING
-This role uses the parent domain's Enterprise Admin credentials for the initial authorization. However, the `domainadmin` and `domainuser` accounts are created in the **new child domain**.
+This role uses the parent domain's Enterprise Admin credentials for the initial authorization. Ensure the `ad_domain_admin` user in your `defaults` block is a member of the "Enterprise Admins" group in the parent domain.
 
 ## Example
 
@@ -24,7 +24,7 @@ defaults:
   ad_domain_admin_password: "YourComplexPassword!"
   ad_domain_user: domainuser
   ad_domain_user_password: "AnotherPassword!"
-  # Note: The safe_mode_password is now passed directly to the role.
+  ad_domain_safe_mode_password: "YourComplexPassword!"
 
 ludus:
   # ... parent DC for ershon.local is defined here ...
@@ -40,9 +40,9 @@ ludus:
           - vm_name: "{{ range_id }}-PARENT-DC1"
             role: "ludus_verify_dc_ready"
     role_vars:
+      # The role_vars block is now much simpler.
       dns_domain_name: "child.parent.local"
-      parent_ea_user: "PARENT\\domainadmin"
-      parent_ea_password: "YourComplexPassword!"
-      safe_mode_password: "YourComplexPassword!" # This is now a required role_var
+      parent_domain_netbios_name: "PARENT"
       parent_dc_ip: "10.2.10.10"
+      # The role will now use variables from the 'defaults' block automatically.
 ```
