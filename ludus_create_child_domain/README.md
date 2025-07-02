@@ -40,9 +40,7 @@ ludus:
           - vm_name: "{{ range_id }}-PARENT-DC1"
             role: "ludus_verify_dc_ready"
     role_vars:
-      # The role_vars block is now much simpler.
       dns_domain_name: "child.parent.local"
       parent_domain_netbios_name: "PARENT"
       parent_dc_ip: "10.2.10.10"
-      # The role will now use variables from the 'defaults' block automatically.
 ```
