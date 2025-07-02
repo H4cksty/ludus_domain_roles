@@ -6,13 +6,13 @@ Ansible role to promote a Windows Server to be an *additional* (secondary) domai
 This role is designed to be used after a primary child domain controller has already been created. It adds a second, redundant DC to that child domain.
 
 ## IMPORTANT
-This role requires all variables to be passed explicitly via `role_vars`. It is designed to be used with a `global-vars` block and YAML anchors in your main `ludus-config.yml`. The user account provided requires Enterprise Admin rights in the parent domain.
+This role requires all variables to be passed explicitly via `role_vars`. It is designed to be used with a `global_role_vars` block and YAML anchors in your main `ludus-config.yml`. The user account provided requires Enterprise Admin rights in the parent domain.
 
 ## Example
 
 ```yaml
 # In your main ludus-config.yml
-global-vars:
+global_role_vars:
   complex_password: &complex_password "YourComplexPassword!"
   simple_password: &simple_password "password"
   domain_admin_user: &domain_admin_user "domainadmin"
