@@ -1,4 +1,6 @@
-import yaml         # requires pip install pyyaml
+#!/usr/bin/python3
+
+import yaml         # requires python pip3 install pyyaml (likely already installed)
 import sys
 
 # --- Helper Functions for User Input ---
