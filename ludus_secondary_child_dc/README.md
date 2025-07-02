@@ -13,10 +13,21 @@ This role requires all variables to be passed explicitly via `role_vars`. It is 
 ```yaml
 # In your main ludus-config.yml
 global_role_vars:
-  complex_password: &complex_password "YourComplexPassword!"
+  # Passwords
+  complex_password: &complex_password "YourComplexPassword!1"
   simple_password: &simple_password "password"
+  
+  # Usernames
   domain_admin_user: &domain_admin_user "domainadmin"
-  parent_netbios: &parent_netbios "PARENT"
+  domain_user_user: &domain_user_user "domainuser"
+  
+  # Parent Domain Info
+  parent_domain: &parent_domain "parent.local"
+  parent_dc_ip: &parent_dc_ip "10.2.10.10"
+
+  # Global Settings
+  functional_level: &functional_level "Win2012R2"
+  full_clone: &full_clone false
 
 ludus:
   - vm_name: "{{ range_id }}-CHILD2-DC2"
@@ -25,10 +36,9 @@ ludus:
         depends_on:
           - { vm_name: "{{ range_id }}-CHILD2-DC1", role: "ludus_create_child_domain" }
     role_vars:
-      dns_domain_name: "child2.parent.local"
-      parent_domain_netbios_name: *parent_netbios
       existing_dc_ip: "10.2.30.10"
-      ad_domain_admin: *domain_admin_user
-      ad_domain_admin_password: *simple_password
-      ad_domain_safe_mode_password: *complex_password
+      dns_domain_name: "child2.parent.local"
+      domain_admin_user: "{{ domain_admin_user }}@{{ dns_domain_name }}"
+      domain_admin_password: *simple_password
+      safe_mode_password: *complex_password
 ```
