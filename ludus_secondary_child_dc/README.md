@@ -31,3 +31,4 @@ ludus:
       ad_domain_admin: *domain_admin_user
       ad_domain_admin_password: *simple_password
       ad_domain_safe_mode_password: *complex_password
+```
