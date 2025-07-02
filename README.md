@@ -38,13 +38,11 @@ Joins a Windows workstation or member server to a child domain created by the `l
 
 ## Installation
 
-To use these roles, copy and paste the following single command into your bash terminal. It will clone the repository, navigate into the new directory, and automatically find and install all roles for your Ludus user.
+To use these roles, copy and paste the following command into your bash terminal in the desired location to save the repo. It will clone the repository, navigate into the new directory, and automatically find and install all roles for your Ludus user.
 
 ```bash
-git clone [https://github.com/H4cksty/ludus_forest_build_roles.git](https://github.com/H4cksty/ludus_forest_build_roles.git) && cd ludus_forest_build_roles && for d in ludus_*; do if [ -d "$d" ]; then ludus ansible role add -d "./$d"; fi; done
+wget https://raw.githubusercontent.com/H4cksty/ludus_forest_build_roles/refs/heads/main/install_forest_build_roles.sh | bash
 ```
-
-Alternatively, you can download the `install_roles.sh` script from this repository and execute it.
 
 ---
 
@@ -84,8 +82,7 @@ defaults:
   ad_domain_admin_password: "password"
   ad_domain_user: domainuser
   ad_domain_user_password: "password"
-  # IMPORTANT: This password MUST meet complexity requirements (uppercase, lowercase,
-  # number, symbol) for the ludus_secondary_child_dc role to succeed.
+  # IMPORTANT: This password MUST meet basic complexity requirements for the ludus_secondary_child_dc role to succeed.
   ad_domain_safe_mode_password: "YourComplexPassword!"
   timezone: America/Chicago
 
