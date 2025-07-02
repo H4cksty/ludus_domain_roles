@@ -7,7 +7,7 @@
 set -e
 
 # Define the repository URL
-REPO_URL="[https://github.com/H4cksty/ludus_forest_build_roles.git](https://github.com/H4cksty/ludus_forest_build_roles.git)"
+REPO_URL="https://github.com/H4cksty/ludus_forest_build_roles.git"
 REPO_DIR="ludus_forest_build_roles"
 
 # Clone the repository
