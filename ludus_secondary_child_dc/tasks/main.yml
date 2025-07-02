@@ -22,7 +22,7 @@
     domain_admin_password: "{{ domain_admin_password }}"
     safe_mode_password: "{{ safe_mode_password }}"
     install_dns: "{{ install_dns }}"
-    state: domain_controller
+    state: "{{ state }}"
 
 - name: Reboot the server after domain promotion
   ansible.windows.win_reboot:
