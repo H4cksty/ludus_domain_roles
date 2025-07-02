@@ -1,4 +1,4 @@
 Within this directory run: 
 ```python
-python pip install pyyaml
+for i in build_ludus_config_dependancies.txt; do python pip install $i; done
 ```
