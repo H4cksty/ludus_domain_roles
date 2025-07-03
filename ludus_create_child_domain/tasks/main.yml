@@ -61,7 +61,7 @@
 - name: Create default domainadmin and domainuser accounts
   microsoft.ad.user:
     name: "{{ item.name }}"
-    samaccountname:: "{{ item.username }}"
+    sam_account_name:: "{{ item.username }}"
     password: "{{ item.password }}"
     upn: "{{ item.username }}@{{ dns_domain_name }}"
     state: present
