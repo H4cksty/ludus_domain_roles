@@ -2,17 +2,22 @@
 """
 range_builder.py
 
-Interactive Ludus Range Builder:
-- Default attacker VLAN (99) with Kali, Windows attack, TeamServers, Redirectors
-- Dual YAML generation: open + segmented
-- Final menu: save, load into Ludus, deploy & watch, or discard.
+Interactive Ludus Range Builder with:
+- Clone type (linked/full)
+- Shared vs per-VM admin creds
+- Optional GPO to disable Windows Defender
+- Default attacker VLAN-99 VMs
+- Dynamic template selection menu
+- Interactive VLAN, IP, CPU, RAM prompts
+- Dual YAML: open + segmented
+- Final menu: save, set config, deploy & watch, or discard.
 """
 
 import os
 import sys
 import argparse
 import subprocess
-import yaml
+import getpass
 from jinja2 import Template
 
 # --------------------------------------------------------------------------
@@ -20,8 +25,13 @@ from jinja2 import Template
 # --------------------------------------------------------------------------
 
 OPEN_TEMPLATE = """
+clone_type: "{{ clone_type }}"
+disable_windows_defender_gpo: {{ disable_defender | lower }}
+
 global_role_vars:
-  # (add your own global creds/anchors here…)
+{% for k, v in global_role_vars.items() %}
+  {{ k }}: "{{ v }}"
+{% endfor %}
 
 vms:
 {% for vm in vms %}
@@ -30,24 +40,34 @@ vms:
     template: "{{ vm.template }}"
     vlan: {{ vm.vlan }}
     ip_last_octet: {{ vm.ip_last_octet }}
+    cpus: {{ vm.cpus }}
+    ram: {{ vm.ram }}
 {%   if vm.domain %}
     domain:
       fqdn: "{{ vm.domain.fqdn }}"
       role: "{{ vm.domain.role }}"
 {%   endif %}
     roles:
-{%   for role in vm.roles %}
+{%   if vm.roles|length == 0 %}
+      [] 
+{%   else %}
+{%     for role in vm.roles %}
       - name: {{ role.name }}
-{%     if role.depends_on %}
+{%       if role.depends_on %}
         depends_on:
-{%       for d in role.depends_on %}
+{%         for d in role.depends_on %}
           - vm_name: "{{ d.vm_name }}"
             role: {{ d.role }}
-{%       endfor %}
-{%     endif %}
-        {% if role.vars %}vars:{% for k,v in role.vars.items() %}
-          {{ k }}: {{ v }}{% endfor %}{% endif %}
-{%   endfor %}
+{%         endfor %}
+{%       endif %}
+{%       if role.vars %}
+        vars:
+{%         for key, val in role.vars.items() %}
+          {{ key }}: "{{ val }}"
+{%         endfor %}
+{%       endif %}
+{%     endfor %}
+{%   endif %}
 {% endfor %}
 """
 
@@ -56,15 +76,12 @@ SEGMENTED_TEMPLATE = """
 network_policies:
   default_isolate_vlans: true
   allow:
-    # All non-DCs → redirectors on specific ports
     - src: non-DC
       dst: redirector
       ports: [80,443,53,8080,8443]
-    # Attack hosts → teamservers on port 50050
     - src: attacker
       dst: teamserver
       ports: [50050]
-    # Domains only talk to each other if explicit trust
     - src: domain
       dst: domain
       trust: true
@@ -74,168 +91,159 @@ network_policies:
 """
 
 # --------------------------------------------------------------------------
-# Data structures
+# Helpers
+# --------------------------------------------------------------------------
+
+def run_cmd(cmd):
+    """Run a shell command and return output stripped, or None if fails."""
+    try:
+        out = subprocess.check_output(cmd, shell=True, text=True)
+        return [l.strip() for l in out.splitlines() if l.strip()]
+    except subprocess.CalledProcessError:
+        return []
+
+def pick_from_list(prompt, items, default_idx=0):
+    """Show numbered list, prompt user to pick an index."""
+    for i, item in enumerate(items):
+        print(f"  [{i+1}] {item}")
+    while True:
+        resp = input(f"{prompt} [default {default_idx+1}]: ").strip()
+        if not resp:
+            return items[default_idx]
+        try:
+            idx = int(resp) - 1
+            if 0 <= idx < len(items):
+                return items[idx]
+        except ValueError:
+            pass
+        print(f"→ enter a number 1–{len(items)}")
+
+def ask(prompt, default=None, cast=str):
+    hint = f" [{default}]" if default is not None else ""
+    resp = input(f"{prompt}{hint}: ").strip()
+    return default if resp == "" else cast(resp)
+
+def ask_yesno(prompt, default=True):
+    yn = "Y/n" if default else "y/N"
+    resp = input(f"{prompt} [{yn}]: ").strip().lower()
+    return default if not resp else (resp in ("y","yes"))
+
+def ask_int(prompt, default, min_val=None, max_val=None):
+    while True:
+        resp = input(f"{prompt} [{default}]: ").strip()
+        val = default if resp == "" else None
+        if resp:
+            try:
+                val = int(resp)
+            except ValueError:
+                print("→ enter an integer")
+                continue
+        if (min_val is not None and val < min_val) or (max_val is not None and val > max_val):
+            print(f"→ must be between {min_val} and {max_val}")
+            continue
+        return val
+
+def ask_global_creds():
+    print("\nEnter GLOBAL domain admin credentials:")
+    admin = ask("  Admin UPN", default="Administrator@parent.local")
+    pwd   = getpass.getpass("  Admin password: ")
+    dsrcm = getpass.getpass("  Safe-Mode (DSRM) password: ")
+    userp = getpass.getpass("  Domain user password: ")
+    return {
+        "ad_domain_admin": admin,
+        "ad_domain_admin_password": pwd,
+        "ad_domain_safe_mode_password": dsrcm,
+        "ad_domain_user_password": userp
+    }
+
+def ask_vm_resources(vm_name):
+    print(f"\nResources for {vm_name}:")
+    cpus = ask_int("  CPUs", default=2, min_val=1)
+    ram  = ask_int("  RAM (GB)", default=2, min_val=1)
+    return cpus, ram
+
+def select_template():
+    print("\nFetching available templates…")
+    templates = run_cmd("ludus templates list | grep TRUE | awk '{print $2}'")
+    if not templates:
+        print("⚠ Unable to fetch templates—fallback to manual entry.")
+        return ask("Template name", default="win2019-server-x64-template")
+    return pick_from_list("Select template", templates)
+
+# --------------------------------------------------------------------------
+# VM Class
 # --------------------------------------------------------------------------
 
 class VM:
     def __init__(self, vm_name, hostname, template, vlan, ip_last_octet,
-                 domain=None, roles=None):
+                 cpus, ram, domain=None, roles=None):
         self.vm_name = vm_name
         self.hostname = hostname
         self.template = template
         self.vlan = vlan
         self.ip_last_octet = ip_last_octet
-        self.domain = domain  # dict with fqdn, role
-        self.roles = roles or []  # list of dicts
+        self.cpus = cpus
+        self.ram = ram
+        self.domain = domain
+        self.roles = roles or []
 
 # --------------------------------------------------------------------------
 # Builders
 # --------------------------------------------------------------------------
 
-def ask_yesno(prompt, default=True):
-    yes = 'Y/n' if default else 'y/N'
-    resp = input(f"{prompt} [{yes}]: ").strip().lower()
-    if not resp:
-        return default
-    return resp in ('y','yes')
-
-def prompt_int(prompt, default=None, choices=None):
-    while True:
-        resp = input(f"{prompt}{' ['+str(default)+']' if default else ''}: ").strip()
-        if not resp and default is not None:
-            return default
-        try:
-            val = int(resp)
-            if choices and val not in choices:
-                print(f"– must be one of {choices}")
-                continue
-            return val
-        except ValueError:
-            print("– please enter an integer")
-
 def build_default_attackers(range_id):
-    """
-    Returns a list of attacker VM objects for VLAN 99.
-    """
     vlan = 99
     vms = []
     # Kali
-    vms.append(VM(
-        vm_name=f"KALI-ATTACK",
-        hostname="KALI-ATTACK",
-        template="kali-x64-meta-template",
-        vlan=vlan,
-        ip_last_octet=int(f"{range_id}99") * 1 + 10,  # 10
-    ))
-    # Windows attack
-    vms.append(VM(
-        vm_name="WIN-ATTACK",
-        hostname="WIN-ATTACK",
-        template="win10-22h2-x64-enterprise-template",
-        vlan=vlan,
-        ip_last_octet=20,
-    ))
-    # Teamservers
-    count_ts = prompt_int("Number of TeamServer VMs to include", default=1, choices=[1,2])
-    for i in range(1, count_ts+1):
-        vms.append(VM(
-            vm_name=f"TEAMSERVER{i}",
-            hostname=f"TEAMSERVER{i}",
-            template="ubuntu-22.04-x64-server-template",
-            vlan=vlan,
-            ip_last_octet=100 * i,
-        ))
+    tpl = select_template()
+    cpus, ram = ask_vm_resources("KALI-ATTACK")
+    vms.append(VM("KALI-ATTACK","KALI-ATTACK",tpl,vlan,10,cpus,ram))
+    # Win-Attack
+    tpl = select_template()
+    cpus, ram = ask_vm_resources("WIN-ATTACK")
+    vms.append(VM("WIN-ATTACK","WIN-ATTACK",tpl,vlan,20,cpus,ram))
+    # TeamServers
+    for i in range(1, ask_int("How many TeamServers?", 1, 1, 2)+1):
+        tpl = select_template()
+        cpus, ram = ask_vm_resources(f"TEAMSERVER{i}")
+        vms.append(VM(f"TEAMSERVER{i}",f"TEAMSERVER{i}",tpl,vlan,100*i,cpus,ram))
     # Redirectors
-    count_rd = prompt_int("Number of Redirector VMs to include", default=1, choices=[1,2])
-    domains = ["jonesphotography.com", "militarydiscounts.com"]
-    for i in range(1, count_rd+1):
-        vms.append(VM(
-            vm_name=f"REDIRECTOR{i}",
-            hostname=f"REDIRECTOR{i}",
-            template="ubuntu-22.04-x64-server-template",
-            vlan=vlan,
-            ip_last_octet=10 + i,
-            roles=[],
-            domain={"fqdn": domains[i-1], "role": "redirector"}
-        ))
+    domains  = ["jonesphotography.com","militarydiscounts.com"]
+    for i in range(1, ask_int("How many Redirectors?", 1, 1, 2)+1):
+        tpl = select_template()
+        cpus, ram = ask_vm_resources(f"REDIRECTOR{i}")
+        vms.append(VM(f"REDIRECTOR{i}",f"REDIRECTOR{i}",tpl,vlan,10+i,cpus,ram,
+                      domain={"fqdn": domains[i-1], "role": "redirector"}))
     return vms
 
-def render_open_yaml(vms):
-    tpl = Template(OPEN_TEMPLATE)
-    return tpl.render(vms=vms)
+def add_custom_vms(vms, use_global_creds):
+    while ask_yesno("Add a custom VM?", default=False):
+        name  = ask("VM name", default=f"VM{len(vms)+1}")
+        host  = ask("Hostname", default=name)
+        tpl   = select_template()
+        vlan  = ask_int("VLAN", default=10, min_val=1)
+        ip    = ask_int("IP last octet", default=10, min_val=1, max_val=254)
+        cpus, ram = ask_vm_resources(name)
+        domain = None
+        if ask_yesno("  Domain-joined?", default=False):
+            fqdn = ask("    Domain FQDN", default="child.example.local")
+            role= ask("    Domain role", default="member")
+            domain={"fqdn": fqdn, "role": role}
+        vm = VM(name, host, tpl, vlan, ip, cpus, ram, domain)
 
-def render_segmented_yaml(open_yaml):
-    tpl = Template(SEGMENTED_TEMPLATE)
-    return tpl.render(open_yaml=open_yaml)
-
-# --------------------------------------------------------------------------
-# I/O & Menus
-# --------------------------------------------------------------------------
-
-def write_file(path, content):
-    with open(path, 'w') as f:
-        f.write(content)
-    print(f"✔ Wrote: {path}")
-
-def final_menu(out_base):
-    print("\nRange YAML Generated:")
-    print(f" 1) {out_base}_build.yml   (open networking)")
-    print(f" 2) {out_base}_segmented.yml (segmented networking)\n")
-    print("What would you like to do next?")
-    print("[1] Save YAML and exit (default)")
-    print("[2] Save + load into Ludus")
-    print("[3] Save + load + deploy + watch")
-    print("[4] Discard and exit")
-    choice = input("Choose [1-4]: ").strip() or "1"
-    return choice
-
-def ludus_cmd(cmd):
-    print(f"→ running: {cmd}")
-    r = subprocess.run(cmd, shell=True)
-    if r.returncode != 0:
-        print(f"⚠ Command failed: {cmd}")
-        sys.exit(r.returncode)
-
-# --------------------------------------------------------------------------
-# Main
-# --------------------------------------------------------------------------
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--range-id", type=int, help="Numeric Range ID", required=True)
-    parser.add_argument("--out", default="range", help="Output base filename")
-    args = parser.parse_args()
-
-    range_id = args.range_id
-    vms = []
-
-    if ask_yesno("Include default attacker VLAN 99 setup?"):
-        vms.extend(build_default_attackers(range_id))
-
-    # TODO: interactive addition of domain VMs (primary DC, child DC, etc.)
-    print("\nNOTE: Domain VMs can be added manually to the output YAML.\n")
-
-    # Render YAML
-    open_yaml = render_open_yaml(vms)
-    segmented_yaml = render_segmented_yaml(open_yaml)
-
-    # Menu
-    choice = final_menu(args.out)
-    if choice == "4":
-        print("Discarding and exiting.")
-        sys.exit(0)
-
-    # Write files
-    write_file(f"{args.out}_build.yml", open_yaml)
-    write_file(f"{args.out}_segmented.yml", segmented_yaml)
-
-    if choice in ("2","3"):
-        ludus_cmd(f"ludus range load {args.out}_build.yml")
-    if choice == "3":
-        ludus_cmd("ludus range deploy")
-        ludus_cmd('watch -c "ludus range list"')
-
-    print("Done.")
-
-if __name__ == "__main__":
-    main()
+        # Roles
+        vm.roles = []
+        for r in range(ask_int("  How many Ludus roles?", 1, 0)):
+            rname = ask(f"    Role {r+1} name", default="")
+            role  = {"name": rname, "depends_on": [], "vars": {}}
+            if ask_yesno("      Add depends_on?", default=False):
+                for _ in range(ask_int("        count",1,1)):
+                    dvn = ask("          Dep VM name", default="")
+                    drn = ask("          Dep role name", default="")
+                    role["depends_on"].append({"vm_name": dvn, "role": drn})
+            if ask_yesno("      Add vars?", default=False):
+                for _ in range(ask_int("        count",1,1)):
+                    k = ask("          Var name", default="")
+                    v = ask("          Var value", default="")
+                    role["vars"][k] = v
+            vm
