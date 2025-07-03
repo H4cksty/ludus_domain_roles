@@ -23,6 +23,7 @@ galaxy_info:
 # This key lists all the Ansible Collections this role depends on.
 collections:
   - ansible.windows
+  - microsoft.ad
 
 dependencies:
   # This role requires that the parent domain controller is verified
