@@ -5,9 +5,10 @@
 
 galaxy_info:
   role_name: ludus_create_child_domain
-  author: Matt Hasty
-  company: kfivefour
-  description: Creates a child domain, its first DC, and standard Ludus user accounts.
+  author: H4cksty
+  description: >
+    Creates a new child domain and installs the first Domain Controller
+    in an existing Active Directory forest.
   license: MIT
   min_ansible_version: "2.9"
   platforms:
