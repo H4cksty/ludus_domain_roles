@@ -2,11 +2,14 @@
 # File: ludus_verify_dc_ready/tasks/main.yml
 # =======================================================================
 ---
-- name: Wait for the Domain Controller to be ready for authentication
-  ansible.builtin.wait_for:
-    # Uses the IP address Ansible is using for the current host.
-    host: "{{ ansible_host }}"
-    port: 389 # Standard LDAP port, indicates AD services are running.
-    timeout: 300 # Wait for up to 5 minutes.
-  # This check is run from the Ludus controller for reliability.
-  delegate_to: localhost
+- name: Wait for LDAP port {{ ldap_port }} to become available
+  ansible.windows.win_wait_for:
+    port: "{{ ldap_port }}"
+    host: "{{ ansible_default_ipv4.address }}"
+    delay: "{{ ldap_delay }}"
+    timeout: "{{ ldap_timeout }}"
+  register: ldap_check
+
+- name: Debug LDAP readiness result
+  debug:
+    var: ldap_check
