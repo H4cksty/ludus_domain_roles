@@ -9,7 +9,7 @@
   assert:
     that:
       - dns_domain_name is defined
-      - parent_dc_ip is defined
+#      - parent_dc_ip is defined
       - ad_domain_admin is defined
       - ad_domain_admin_password is defined
       - ad_domain_safe_mode_password is defined
@@ -27,17 +27,24 @@
     reboot_timeout: 600
   when: ad_role.reboot_required
 
+- name: Configure DNS to resolve parent domain before promotion
+  ansible.windows.win_dns_client:
+    adapter_names: "*"
+    ipv4_addresses:
+      - "{{ parent_dc_ip }}"
+      - "127.0.0.1" # Also include loopback for when this becomes a DC
+  
 - name: Promote this server to a child Domain Controller
   microsoft.ad.domain_child:
     dns_domain_name: "{{ dns_domain_name }}"
-    domain_admin_user: "{{ ad_domain_admin }}@{{ parent_dc_ip }}"
+    domain_admin_user: "{{ ad_domain_admin }}"
     domain_admin_password: "{{ ad_domain_admin_password }}"
     safe_mode_password: "{{ ad_domain_safe_mode_password }}"
     install_dns: true
     reboot: no
   register: promotion
   check_mode: no
-#  no_log: true
+ # no_log: true
 
 - name: Reboot after child domain promotion (if required)
   ansible.windows.win_reboot:
@@ -63,4 +70,3 @@
     - { username: "domainuser",  password: "{{ ad_domain_user_password }}",  groups: "Domain Users" , firstname: "Jeff", surname: "Benson"}
   when: promotion.changed
 #  no_log: true
-
