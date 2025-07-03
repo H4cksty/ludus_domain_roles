@@ -1,7 +1,7 @@
 # =======================================================================
 # File: ludus_create_child_domain/tasks/main.yml
 # Description: This role creates a new child domain in an existing AD forest.
-# Security Note: 'no_log: true' is used on tasks handling credentials
+# Security Note: 'no_log: true' is used on tasks handling credentials  <---- MAKES DEBUGGING TERRIBLE!!!
 #                to prevent them from being exposed in logs upon failure.
 # =======================================================================
 ---
@@ -44,7 +44,7 @@
     reboot: no
   register: promotion
   check_mode: no
-#  no_log: true
+  #no_log: true
 
 - name: Reboot after child domain promotion (if required)
   ansible.windows.win_reboot:
@@ -63,9 +63,12 @@
     identity: "{{ item.username }}"
     password: "{{ item.password }}"
     upn: "{{ item.username }}@{{ dns_domain_name }}"
-    groups: "{{ item.groups }}"
     state: present
+    groups:
+      add: 
+        - "{{ item.groups }}"
+
   loop:
-    - { username: "domainadmin", password: "{{ ad_domain_admin_password }}", groups: "Domain Admins" }
-    - { username: "domainuser",  password: "{{ ad_domain_user_password }}",  groups: "Domain Users" }
- # no_log: true
+    - { username: "domainadmin", password: "{{ ad_domain_admin_password }}", groups: ["Domain Admins"] }
+    - { username: "domainuser",  password: "{{ ad_domain_user_password }}",  groups: ["Domain Users"] }
+  #no_log: true
