@@ -8,6 +8,14 @@ An interactive Python script to generate Ludus range definitions with:
   - `*_segmented.yml` (strict VLAN isolation + special allow rules)  
 - Final menu to save, load into Ludus, deploy & watch, or discard  
 
+## New Prompts
+
+- Clone strategy: linked vs full  
+- Shared vs per-VM admin credentials  
+- Include GPO to disable Windows Defender?  
+- Dynamic template selection (from `ludus templates list`)  
+- Default attacker VLAN-99 VMs  
+- Interactive custom VM loop (VLAN, IP, CPUs, RAM)  
 ---
 
 ## 🏃‍♂️ Quickstart
@@ -27,10 +35,12 @@ python3 range_builder.py --range-id 10
 - How many Redirectors? (1/2)
 5. At the end, choose:
 ```yaml
-1) Save YAML only  
-2) Save + `ludus range config set`  
-3) Save + load + `ludus range deploy` + `watch -c "ludus range list"`  
-4) Discard and exit  
+Final menu:
+
+1) Save & exit  
+2) Save & `ludus range config set -f <file>`  
+3) Save + set config + `ludus range deploy` + live watch  
+4) Discard 
 ```
 Your two files will be:
 - `range_build.yml`  
