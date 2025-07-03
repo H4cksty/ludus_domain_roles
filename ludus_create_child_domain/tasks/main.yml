@@ -62,11 +62,11 @@
   microsoft.ad.user:
     identity: "{{ item.username }}"
     password: "{{ item.password }}"
-    user_principal_name: "{{ item.username }}@{{ dns_domain_name }}"
+    upn: "{{ item.username }}@{{ dns_domain_name }}"
     groups: "{{ item.groups }}"
     state: present
   loop:
     - { username: "domainadmin", password: "{{ ad_domain_admin_password }}", groups: "Domain Admins" }
     - { username: "domainuser",  password: "{{ ad_domain_user_password }}",  groups: "Domain Users" }
   when: promotion.changed
- # no_log: true
+#  no_log: true
