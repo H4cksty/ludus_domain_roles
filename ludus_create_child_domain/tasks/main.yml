@@ -9,7 +9,7 @@
   assert:
     that:
       - dns_domain_name is defined
-#      - parent_dc_ip is defined
+      - parent_dc_ip is defined
       - ad_domain_admin is defined
       - ad_domain_admin_password is defined
       - ad_domain_safe_mode_password is defined
@@ -37,14 +37,14 @@
 - name: Promote this server to a child Domain Controller
   microsoft.ad.domain_child:
     dns_domain_name: "{{ dns_domain_name }}"
-    domain_admin_user: "{{ ad_domain_admin }}@{{ parent_dc_ip }}"
+    domain_admin_user: "{{ ad_domain_admin }}@{{ dns_domain_name.split('.')[1:] | join('.') }}"
     domain_admin_password: "{{ ad_domain_admin_password }}"
     safe_mode_password: "{{ ad_domain_safe_mode_password }}"
     install_dns: true
     reboot: no
   register: promotion
   check_mode: no
- # no_log: true
+#  no_log: true
 
 - name: Reboot after child domain promotion (if required)
   ansible.windows.win_reboot:
@@ -66,7 +66,7 @@
     groups: "{{ item.groups }}"
     state: present
   loop:
-    - { username: "domainadmin", password: "{{ ad_domain_admin_password }}", groups: "Domain Admins", firstname: "Ben", surname: "Clark" }
-    - { username: "domainuser",  password: "{{ ad_domain_user_password }}",  groups: "Domain Users" , firstname: "Jeff", surname: "Benson"}
+    - { username: "domainadmin", password: "{{ ad_domain_admin_password }}", groups: "Domain Admins" }
+    - { username: "domainuser",  password: "{{ ad_domain_user_password }}",  groups: "Domain Users" }
   when: promotion.changed
-#  no_log: true
+ # no_log: true
