@@ -2,11 +2,14 @@
 # File: ludus_join_child_domain/defaults/main.yml
 # =======================================================================
 ---
-# All variables for this role are expected to be passed via role_vars.
-dc_ip: ""
-dns_domain_name: ""    # format user@child.parent.local
-domain_admin_user: ""
-domain_admin_password: ""
+# Optional tuning for domain join retries
+join_retries: 5
+join_delay: 15
 
-# This exists to get around a parsing issue
-ad_domain_admin: ""
+# LDAP readiness check
+ldap_port: 389
+ldap_timeout: 300
+ldap_delay: 10
+
+# Optional RSAT install (only applies to Server OS)
+install_rsat: true
