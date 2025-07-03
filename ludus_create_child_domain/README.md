@@ -47,18 +47,18 @@ global_role_vars:
   functional_level: &functional_level "Win2012R2"  # using yaml anchor for this one since it sometimes is required by ansible roles.
   windows_hw_defaults: &windows_hw_defaults
     ram_min_gb: 1
-    ram_gb: 4
+    ram_gb: 8
     cpus: 4
   windows_key_defaults: &windows_key_defaults  # use this if you'll have the same config on a lot of win vms
-    sysprep: false
+    sysprep: true
     chocolatey_ignore_checksums: false # Set to true to ignore any checksum errors when installing chocolatey packages (for packages that are 3rd party hosted and update before the choco package hash updates). Default: false
     chocolatey_packages:
       - vscodium                # An array of chocolatey package names you'd like installed on this VM. Default: none
     office_version: 2019        # The Microsoft office version you would like installed on this VM (2013|2016|2019|2021). Default: undefined (don't install office)
     office_arch: 64bit          # The architecture for the Microsoft office install (64bit|32bit)
     visual_studio_version: 2019 # The version of Microsoft Visual Studio to install (community edition). Note: 2022 cannot target < .NET 4.5. Default: undefined (don't install visual studio)
-    autologon_user: myuser      # The username to use for autologon. Default: localuser unless domain joined, then default.ad_domain_user
-    autologon_password: mypass  # The password to use for autologon. Default: password unless domain joined, then default.ad_domain_user_password
+    #autologon_user: myuser      # The username to use for autologon. Default: localuser unless domain joined, then default.ad_domain_user
+    #autologon_password: mypass  # The password to use for autologon. Default: password unless domain joined, then default.ad_domain_user_password
 
 # The 'defaults' block sets global values required by the Ludus schema.
 defaults:
