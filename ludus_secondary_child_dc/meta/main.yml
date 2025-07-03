@@ -15,7 +15,7 @@ galaxy_info:
         - 2016
         - 2019
         - 2022
-    - tags:
+  galaxy_tags:
         - ludus
 
 dependencies: []
