@@ -30,21 +30,11 @@
 - name: Promote this server to a child Domain Controller
   microsoft.ad.domain_child:
     dns_domain_name: "{{ dns_domain_name }}"
-    parent_domain_name: "{{ parent_domain_fqdn }}"
-    domain_admin_user: "{{ ad_domain_admin }}@{{ parent_domain_fqdn }}"
+    domain_admin_user: "{{ ad_domain_admin }}@{{ parent_domain_name }}"
     domain_admin_password: "{{ ad_domain_admin_password }}"
     safe_mode_password: "{{ ad_domain_safe_mode_password }}"
-    site_name: "{{ site_name }}"
     install_dns: true
-    reboot: no
-  register: promotion
-  check_mode: no
-#  no_log: true
-
-- name: Reboot after child domain promotion (if required)
-  ansible.windows.win_reboot:
-    reboot_timeout: 900
-  when: promotion.reboot_required
+    reboot: true
 
 - name: Wait for LDAP port {{ ldap_port }} to become available
   ansible.windows.win_wait_for:
