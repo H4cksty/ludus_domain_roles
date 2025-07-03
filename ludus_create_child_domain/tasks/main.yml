@@ -9,6 +9,7 @@
   assert:
     that:
       - dns_domain_name is defined
+      - parent_domain_name is defined
       - ad_domain_admin is defined
       - ad_domain_admin_password is defined
       - ad_domain_safe_mode_password is defined
@@ -51,7 +52,7 @@
     groups: "{{ item.groups }}"
     state: present
   loop:
-    - { username: "domainadmin", password: "{{ ad_domain_admin_password }}", groups: "Domain Admins" }
-    - { username: "domainuser",  password: "{{ ad_domain_user_password }}",  groups: "Domain Users" }
+    - { username: "domainadmin", password: "{{ ad_domain_admin_password }}", groups: "Domain Admins", firstname: "Ben", surname: "Clark" }
+    - { username: "domainuser",  password: "{{ ad_domain_user_password }}",  groups: "Domain Users", firstname: "Jeff", surname: "Benson" }
   when: promotion.changed
 #  no_log: true
