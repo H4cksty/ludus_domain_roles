@@ -2,4 +2,6 @@
 # File: ludus_verify_dc_ready/defaults/main.yml
 # =======================================================================
 ---
-# This role requires no default variables.
+ldap_port: 389
+ldap_timeout: 300
+ldap_delay: 10
