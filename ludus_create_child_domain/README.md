@@ -12,7 +12,7 @@ It is designed to be idempotent and safe to run multiple times. Passwords and ot
 
 ---
 
-## ‼️ Requirements
+## ‼️ Requirements (these are usually installed in Ludus by default)
 
 Before using this role, ensure the following requirements are met:
 
