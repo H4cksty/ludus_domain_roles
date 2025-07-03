@@ -119,8 +119,8 @@ ludus:
 | Variable                       | Description                                                  | Example                        |
 | ------------------------------ | ------------------------------------------------------------ | ------------------------------ |
 | `dns_domain_name`              | FQDN of the new child domain.                                | `child.parent.local`           |
-| `parent_domain_fqdn`           | FQDN of the parent domain.                                   | `parent.local`                 |
-| `ad_domain_admin`              | Admin UPN with Enterprise Admins or Domain Admins of the forest root permissions. | `Administrator@parent.local`   |
+| `parent_domain_name`           | FQDN of the parent domain.                                   | `parent.local`                 |
+| `ad_domain_admin`              | Admin UPN with Enterprise Admins or Domain Admins of the forest root permissions. | `domainadmin`   |
 | `ad_domain_admin_password`     | Password for the forest-level admin account.                 | `"ChangeMe123!"`               |
 | `ad_domain_safe_mode_password` | DSRM password for recovery mode on the new DC.               | `"SafeModePwd!"`               |
 | `ad_domain_user_password`      | Password for the new `domainadmin` and `domainuser` accounts. | `"UserUserPwd!"`               |
@@ -131,7 +131,6 @@ These variables have default values defined in `defaults/main.yml`.
 
 | Variable         | Default                     | Description                                       |
 | ---------------- | --------------------------- | ------------------------------------------------- |
-| `site_name`      | `"Default-First-Site-Name"` | AD site name where this DC will be placed.        |
 | `ldap_port`      | `389`                       | Port for the LDAP readiness check.                |
 | `ldap_timeout`   | `300`                       | Max time in seconds to wait for LDAP to be ready. |
 | `ldap_delay`     | `15`                        | Delay in seconds before starting LDAP checks.     |
