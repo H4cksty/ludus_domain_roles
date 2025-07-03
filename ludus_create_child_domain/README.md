@@ -16,9 +16,10 @@ It is designed to be idempotent and safe to run multiple times. Passwords and ot
 
 Before using this role, ensure the following requirements are met:
 
-1.  **Ansible Collection:** The `ansible.windows` collection must be installed on your Ludus server. You can install it with:
+1.  **Ansible Collections:** The following Ansible collections must be installed on your Ludus server.
     ```bash
     ludus ansible collection add ansible.windows
+    ludus ansible collection add microsoft.ad
     ```
 2.  **Role Dependency:** This role depends on `ludus_verify_dc_ready`. The `meta/main.yml` file handles this dependency automatically, so Ansible will ensure the parent DC is ready before this role runs.
 
@@ -26,23 +27,47 @@ Before using this role, ensure the following requirements are met:
 
 ## 📌 Example — `ludus-config.yml`
 
-This example demonstrates how to use a `defaults` block with YAML anchors to define credentials once and reuse them across multiple roles, keeping the configuration clean.
+This example demonstrates the correct structure for a Ludus configuration file, using `global_role_vars` and `defaults` as separate top-level blocks. YAML anchors are used to define credentials once and reuse them, keeping the configuration clean and easy to manage.
 
 ```yaml
-# The 'defaults' block sets global values for the entire range.
-# We use YAML anchors (&) to define reusable blocks for credentials.
-defaults:
-  role_vars:
-    credentials: &credentials
-      ad_domain_admin: "Administrator@parent.local"
-      ad_domain_admin_password: "ChangeMe123!"
-      ad_domain_safe_mode_password: "SafeModePwd!"
-      ad_domain_user_password: "UserUserPwd!"
+# Wide open networking for setup, troubleshooting, and downloading tools
+network:
+  inter_vlan_default: ACCEPT
+  external_default: ACCEPT
 
+# global_role_vars is a top-level block for defining reusable variables.
+# Placing variables w/ yaml anchors for passing to ansible roles and other fields not allowed in Ludus "defaults:" block.
+global_role_vars:
+  credentials: &credentials
+    ad_domain_admin: "domainadmin"
+    ad_domain_admin_password: "ChangeMe123!"
+    ad_domain_safe_mode_password: "SafeModePwd!"
+    ad_domain_user: "domainuser"
+    ad_domain_user_password: "UserUserPwd!"
+  functional_level: &functional_level "Win2012R2"  # using yaml anchor for this one since it sometimes is required by ansible roles.
+
+# The 'defaults' block sets global values required by the Ludus schema.
+defaults:
+  # Use the YAML merge key (<<) to include the credentials anchor.
+  <<: *credentials
+  # These fields are required by the Ludus 'defaults' schema.
+  ad_forest_functional_level: *functional_level
+  ad_domain_functional_level: *functional_level
+  timezone: "America/Chicago"
+  stale_hours: 0
+  snapshot_with_RAM: false
+  enable_dynamic_wallpaper: true
+
+# The main ludus block defining the VMs.
 ludus:
   - vm_name: "{{ range_id }}-PARENT-DC1"
     hostname: "PARENT-DC1"
     template: win2019-server-x64-template
+    # These hardware/OS fields are required for each VM.
+    ram_gb: 4
+    cpus: 2
+    windows:
+      sysprep: true
     vlan: 10
     ip_last_octet: 10
     domain:
@@ -57,6 +82,11 @@ ludus:
   - vm_name: "{{ range_id }}-CHILD-DC1"
     hostname: "CHILD-DC1"
     template: win2019-server-x64-template
+    ram_min_gb: 1
+    ram_gb: 4
+    cpus: 2
+    windows:
+      sysprep: true
     vlan: 20
     ip_last_octet: 10
     roles:
@@ -67,15 +97,15 @@ ludus:
           - vm_name: "{{ range_id }}-PARENT-DC1"
             role: ludus_verify_dc_ready
         vars:
-          # --- Required Variables ---
+          # --- Required Role Variables ---
           dns_domain_name: "child.parent.local"
           parent_domain_netbios_name: "PARENT"
           parent_dc_ip: "10.2.10.10" # Use the IP of the parent DC
 
-          # --- Optional Variables (overriding defaults) ---
+          # --- Optional Role Variables (overriding defaults) ---
           site_name: "Child-Site"
 
-          # Use the YAML merge key (<<) to include the credentials anchor.
+          # Use the YAML merge key (<<) to pass the credentials to the role.
           <<: *credentials
 ```
 
