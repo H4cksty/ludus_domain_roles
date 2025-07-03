@@ -77,7 +77,6 @@ ludus:
   - vm_name: "{{ range_id }}-PARENT-DC1"
     hostname: "PARENT-DC1"
     template: win2019-server-x64-template
-    # These hardware/OS fields are required for each VM.
     <<: *windows_hw_defaults
     windows:
       sysprep: true
@@ -101,6 +100,7 @@ ludus:
     vlan: 20
     ip_last_octet: 10
     roles:
+      # This role also validates that the newly created DC is operational to prevent race conditions when adding domain members or alternate DCs.
       - name: ludus_create_child_domain
         # This 'depends_on' block ensures this role only runs AFTER
         # the parent DC is verified to be ready.
@@ -112,14 +112,14 @@ ludus:
           dns_domain_name: "child.parent.local"
           parent_domain_netbios_name: "PARENT"
           parent_dc_ip: "10.2.10.10" # Use the IP of the parent DC
-
-          # --- Optional Role Variables (overriding defaults) ---
-          site_name: "Child-Site"
-
           # Use the YAML merge key (<<) to pass the credentials to the role.
           <<: *credentials
+          # --- Optional Role Variables (overriding defaults) ---
+          # --- Dynamically Set Variable ---
+          # This takes the first part of the dns_domain_name (child),
+          # capitalizes it (CHILD), and adds "-Site".
+          site_name: "{{ (dns_domain_name.split('.')[0]).upper() }}-Site"
 ```
-
 ---
 
 ## 🔧 Variables
