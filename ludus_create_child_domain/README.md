@@ -77,6 +77,7 @@ ludus:
   - vm_name: "{{ range_id }}-PARENT-DC1"
     hostname: "PARENT-DC1"
     template: win2019-server-x64-template
+    # Use yaml merge key to set ram and cpu
     <<: *windows_hw_defaults
     windows:
       sysprep: true
