@@ -2,7 +2,6 @@
 # File: ludus_create_child_domain/meta/main.yml
 # =======================================================================
 ---
-dependencies: []
 
 galaxy_info:
   role_name: ludus_create_child_domain
@@ -24,7 +23,7 @@ galaxy_info:
     - server
     - ludus
 
+dependencies: []
+
 collections:
-  - microsoft.ad
   - ansible.windows
-  - community.windows
