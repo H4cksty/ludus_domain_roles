@@ -1,71 +1,91 @@
 # 🏗️ ludus_create_child_domain
 
-Creates a new child Active Directory domain in an existing forest and promotes the current host to a Domain Controller (DC). This role ensures the new DC is fully provisioned and includes built-in LDAP readiness checks and account creation.
+Creates a new child Active Directory domain in an existing forest and promotes the current host to be its first Domain Controller (DC). This role is designed for security and robustness, with built-in credential protection, readiness checks, and automatic account creation.
 
 ---
 
 ## 🧠 Description
 
-This role is intended for use on a Windows VM that will become the first DC of a child domain. It installs the required AD DS features, performs the promotion into the child domain, waits for services like LDAP to start, and creates two basic domain accounts:
+This role is intended for use on a Windows VM that will become the first DC of a new child domain. It automates the entire provisioning process, from installing the required Windows features to creating default user accounts.
 
-- `domainadmin@child.domain.local`
-- `domainuser@child.domain.local`
+It is designed to be idempotent and safe to run multiple times. Passwords and other secrets are handled securely and will not be logged.
 
 ---
 
-## 📌 Example — `ludus_config.yml`
+## ‼️ Requirements
+
+Before using this role, ensure the following requirements are met:
+
+1.  **Ansible Collection:** The `ansible.windows` collection must be installed on your Ludus server. You can install it with:
+    ```bash
+    ludus ansible collection add ansible.windows
+    ```
+
+2.  **Role Dependency:** This role depends on `ludus_verify_dc_ready`. The `meta/main.yml` file handles this dependency automatically, so Ansible will ensure the parent DC is ready before this role runs.
+
+---
+
+## 📌 Example — `ludus-config.yml`
 
 ```yaml
+# It's good practice to define global variables for credentials
+# to keep your configuration DRY (Don't Repeat Yourself).
 global_role_vars:
   ad_domain_admin: "Administrator@parent.local"
   ad_domain_admin_password: "ChangeMe123!"
   ad_domain_safe_mode_password: "SafeModePwd!"
   ad_domain_user_password: "UserUserPwd!"
 
-  base_retry: &base_retry
-    retries: 5
-    delay: 30
+# YAML anchors can be used to define reusable blocks.
+# This anchor defines a standard retry configuration.
+base_retry: &base_retry
+  retries: 5
+  delay: 30
 
-- vm_name: "{{ range_id }}-PARENT-DC1"
-  hostname: "PARENT-DC1"
-  template: win2019-server-x64-template
-  vlan: 10
-  ip_last_octet: 10
-  domain:
-    fqdn: "parent.local"
-    role: "primary-dc"
-  roles:
-    - name: ludus_verify_dc_ready
-      vars:
-        ldap_timeout: 300
+ludus:
+  - vm_name: "{{ range_id }}-PARENT-DC1"
+    hostname: "PARENT-DC1"
+    template: win2019-server-x64-template
+    vlan: 10
+    ip_last_octet: 10
+    domain:
+      fqdn: "parent.local"
+      role: "primary-dc"
+    roles:
+      # This role is used as a dependency check by the child DC.
+      - name: ludus_verify_dc_ready
+        vars:
+          ldap_timeout: 300
 
-- vm_name: "{{ range_id }}-CHILD-DC1"
-  hostname: "CHILD-DC1"
-  template: win2019-server-x64-template
-  vlan: 20
-  ip_last_octet: 10
-  roles:
-    - name: ludus_create_child_domain
-      depends_on:
-        - vm_name: "{{ range_id }}-PARENT-DC1"
-          role: ludus_verify_dc_ready
-      vars:
-        <<: *base_retry
+  - vm_name: "{{ range_id }}-CHILD-DC1"
+    hostname: "CHILD-DC1"
+    template: win2019-server-x64-template
+    vlan: 20
+    ip_last_octet: 10
+    roles:
+      - name: ludus_create_child_domain
+        # This 'depends_on' block ensures this role only runs AFTER
+        # the parent DC is verified to be ready.
+        depends_on:
+          - vm_name: "{{ range_id }}-PARENT-DC1"
+            role: ludus_verify_dc_ready
+        vars:
+          # Use the YAML anchor defined above
+          <<: *base_retry
 
-        dns_domain_name: "child.parent.local"
-        parent_domain_netbios_name: "PARENT"
-        parent_dc_ip: "192.168.10.10"
+          # --- Required Variables ---
+          dns_domain_name: "child.parent.local"
+          parent_domain_netbios_name: "PARENT"
+          parent_dc_ip: "10.2.10.10" # Use the IP of the parent DC
 
-        site_name: "Default-First-Site-Name"
-        dns_delegation: false
-        ldap_port: 389
-        ldap_timeout: 300
-        ldap_delay: 10
+          # --- Optional Variables (overriding defaults) ---
+          site_name: "Child-Site"
 
-        ad_domain_admin: "{{ global_role_vars.ad_domain_admin }}"
-        ad_domain_admin_password: "{{ global_role_vars.ad_domain_admin_password }}"
-        ad_domain_safe_mode_password: "{{ global_role_vars.ad_domain_safe_mode_password }}"
-        ad_domain_user_password: "{{ global_role_vars.ad_domain_user_password }}"
+          # --- Credentials (passed from global_role_vars) ---
+          ad_domain_admin: "{{ global_role_vars.ad_domain_admin }}"
+          ad_domain_admin_password: "{{ global_role_vars.ad_domain_admin_password }}"
+          ad_domain_safe_mode_password: "{{ global_role_vars.ad_domain_safe_mode_password }}"
+          ad_domain_user_password: "{{ global_role_vars.ad_domain_user_password }}"
 ```
 ## 🔧 Required Variables
 
