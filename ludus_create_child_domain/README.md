@@ -106,13 +106,9 @@ ludus:
     role_vars:
       # --- Required Role Variables ---
       dns_domain_name: "child.parent.local"
-      parent_domain_fqdn: "parent.local"
-      
+      parent_domain_name: "parent.local"
       # Pass credentials using the anchor
       <<: *credentials
-      
-      # --- Optional Role Variables (overriding defaults) ---
-      site_name: "CHILD-Site"
 ```
 ---
 
