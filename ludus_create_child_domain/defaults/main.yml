@@ -22,4 +22,3 @@ domain_user_password: ""
 create_dns_delegation: true
 install_dns: true
 reboot: true
-ad_domain_admin: ""
