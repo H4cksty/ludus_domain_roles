@@ -7,3 +7,6 @@ dc_ip: ""
 dns_domain_name: ""    # format user@child.parent.local
 domain_admin_user: ""
 domain_admin_password: ""
+
+# This exists to get around a parsing issue
+ad_domain_admin: ""
