@@ -35,7 +35,7 @@
     domain_admin_password: "{{ ad_domain_admin_password }}"
     safe_mode_password: "{{ ad_domain_safe_mode_password }}"
     site_name: "{{ site_name }}"
-    state: child_domain
+    state: domain_controller
     install_dns: true
     reboot: no
   register: promotion
