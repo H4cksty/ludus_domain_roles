@@ -1,7 +1,18 @@
 # =======================================================================
 # File: ludus_verify_dc_ready/defaults/main.yml
+# Description: Provides default values for the LDAP readiness check.
+#              These values can be overridden in the ludus-config.yml
+#              if needed for a specific host.
 # =======================================================================
 ---
+# The port to check for LDAP service availability.
+# 389 is the standard unencrypted LDAP port.
 ldap_port: 389
+
+# The delay in seconds before starting to check for the LDAP port.
+# This gives services time to initialize after a potential reboot.
+ldap_delay: 15
+
+# The timeout in seconds for the LDAP port check. This should be long
+# enough to account for a full VM boot and service startup.
 ldap_timeout: 300
-ldap_delay: 10
