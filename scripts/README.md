@@ -26,11 +26,12 @@ python3 range_builder.py --range-id 10
 - How many TeamServers? (1/2)
 - How many Redirectors? (1/2)
 5. At the end, choose:
+```yaml
 1) Save YAML only  
-2) Save + `ludus range load`  
+2) Save + `ludus range config set`  
 3) Save + load + `ludus range deploy` + `watch -c "ludus range list"`  
 4) Discard and exit  
-
+```
 Your two files will be:
 - `range_build.yml`  
 - `range_segmented.yml`  
