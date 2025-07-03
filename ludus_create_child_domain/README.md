@@ -107,7 +107,6 @@ ludus:
       # --- Required Role Variables ---
       dns_domain_name: "child.parent.local"
       parent_domain_fqdn: "parent.local"
-      parent_dc_ip: "10.2.10.10" # Use the IP of the parent DC
       
       # Pass credentials using the anchor
       <<: *credentials
@@ -125,7 +124,6 @@ ludus:
 | ------------------------------ | ------------------------------------------------------------ | ------------------------------ |
 | `dns_domain_name`              | FQDN of the new child domain.                                | `child.parent.local`           |
 | `parent_domain_fqdn`           | FQDN of the parent domain.                                   | `parent.local`                 |
-| `parent_dc_ip`                 | IP address of a Domain Controller in the parent domain.      | `10.2.10.10`                   |
 | `ad_domain_admin`              | Admin UPN with Enterprise Admins or Domain Admins of the forest root permissions. | `Administrator@parent.local`   |
 | `ad_domain_admin_password`     | Password for the forest-level admin account.                 | `"ChangeMe123!"`               |
 | `ad_domain_safe_mode_password` | DSRM password for recovery mode on the new DC.               | `"SafeModePwd!"`               |
