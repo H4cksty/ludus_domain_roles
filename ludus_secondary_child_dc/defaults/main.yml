@@ -2,13 +2,11 @@
 # File: ludus_secondary_child_dc/defaults/main.yml
 # =======================================================================
 ---
-# All variables for this role are expected to be passed via role_vars.
-existing_dc_ip: ""
-dns_domain_name: ""
-domain_admin_user: ""
-domain_admin_password: ""
-safe_mode_password: ""
+# Optional tuning
+site_name: "Default-First-Site-Name"
+dns_delegation: false
 
-state: "domain_controller"
-install_dns: true
-reboot: true
+# LDAP readiness check
+ldap_port: 389
+ldap_timeout: 300
+ldap_delay: 10
