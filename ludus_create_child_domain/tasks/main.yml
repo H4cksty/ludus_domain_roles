@@ -33,7 +33,7 @@
     dns_domain_name: "{{ dns_domain_name }}"
     parent_domain_name: "{{ parent_domain_fqdn }}"
     domain_admin_credential:
-      username: "{{ ad_domain_admin }}"
+      username: "{{ ad_domain_admin }}@{{ parent_domain_fqdn }}"
       password: "{{ ad_domain_admin_password }}"
     safe_mode_password: "{{ ad_domain_safe_mode_password }}"
     site_name: "{{ site_name }}"
