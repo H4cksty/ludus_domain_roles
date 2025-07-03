@@ -12,9 +12,10 @@
     # that Active Directory Domain Services are running.
     port: "{{ ldap_port }}"
 
-    # 'ansible_default_ipv4.address' is a magic variable that resolves
-    # to the IP address of the host this task is running on.
-    host: "{{ ansible_default_ipv4.address }}"
+    # Use 'ansible_host' which is the IP from the inventory that Ansible
+    # is connecting to. This is more reliable than 'ansible_default_ipv4'
+    # which depends on fact gathering that may not have completed.
+    host: "{{ ansible_host }}"
 
     # Delay before starting the check. This gives services time to
     # initialize after a reboot.
