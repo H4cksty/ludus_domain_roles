@@ -1,84 +1,84 @@
 # ✅ ludus_verify_dc_ready
 
-A minimalist Ansible role that ensures a Domain Controller (DC) is fully online and its LDAP services are responsive. This role is purpose-built for use within [Ludus](https://github.com/H4cksty/ludus) scenarios as a dependency guard.
+A simple role that acts as a readiness probe for an Active Directory Domain Controller. It waits for the LDAP service to become available, ensuring a DC is fully operational before other roles attempt to interact with it.
 
 ---
 
-## 🔍 Purpose
+## 🧠 Description
 
-This role probes port **389 (LDAP)** on the target machine and waits until it becomes available. It serves as a "green light" signal—ensuring that the DC has completed promotion and Active Directory services are operational before other roles begin.
-
-It’s ideal as a `depends_on` prerequisite for:
-
-- `ludus_create_child_domain`
-- `ludus_join_domain`
-- Any GPO or replication-sensitive roles
+This role is a foundational building block for complex, multi-stage Active Directory deployments in Ludus. Its sole purpose is to pause Ansible execution until a target Domain Controller is confirmed to be online and its core services are running. It is most commonly used in the `depends_on` section of a `ludus-config.yml` file to prevent race conditions.
 
 ---
 
-## 🛠️ What It Does
+## ‼️ Requirements
 
-- ✅ Waits up to a defined timeout (`ldap_timeout`)
-- ✅ Checks availability of port `389` on the machine's default IPv4 address
-- ✅ Logs the wait result for traceability
-- ✅ Requires **no credentials** or external systems
+Before using this role, ensure the following requirement is met:
 
----
-
-## 🔧 Role Variables
-
-All variables are optional (defaults shown):
-
-| Variable       | Type    | Description                              | Default |
-|----------------|---------|------------------------------------------|---------|
-| `ldap_port`    | Integer | Port to probe (typically 389 for LDAP)   | `389`   |
-| `ldap_timeout` | Integer | Max time to wait (in seconds)            | `300`   |
-| `ldap_delay`   | Integer | Delay before first check (in seconds)    | `10`    |
-
-To override any of these, pass them in the `vars:` block of your `ludus_config.yml`.
+1.  **Ansible Collection:** The `ansible.windows` collection must be installed on your Ludus server. You can install it with:
+    ```bash
+    ludus ansible collection add ansible.windows
+    ```
 
 ---
 
-## 📘 Example — Ludus Deployment Snippet
+## 📌 Example — `ludus-config.yml`
+
+This example shows how `ludus_verify_dc_ready` is applied to a primary DC. Another VM (like a child DC) would then list this role in its `depends_on` block to ensure it waits for the primary DC to be ready.
 
 ```yaml
-- vm_name: "{{ range_id }}-PARENT-DC1"
-  hostname: "PARENT-DC1"
-  template: win2019-server-x64-template
-  vlan: 10
-  ip_last_octet: 10
-  domain:
-    fqdn: "parent.local"
-    role: "primary-dc"
-  roles:
-    - name: ludus_verify_dc_ready
-      vars:
-        ldap_timeout: 240  # Wait up to 4 minutes
-```
-# Then Downstream....
-```yaml
-- vm_name: "{{ range_id }}-CHILD-DC1"
-  roles:
-    - name: ludus_create_child_domain
-      depends_on:
-        - vm_name: "{{ range_id }}-PARENT-DC1"
-          role: ludus_verify_dc_ready
-```
+ludus:
+  - vm_name: "{{ range_id }}-PARENT-DC1"
+    hostname: "PARENT-DC1"
+    template: win2019-server-x64-template
+    vlan: 10
+    ip_last_octet: 10
+    domain:
+      fqdn: "parent.local"
+      role: "primary-dc"
+    roles:
+      # This role runs on the DC to mark it as a dependency target.
+      # We can override the default timeout if needed.
+      - name: ludus_verify_dc_ready
+        vars:
+          ldap_timeout: 400
 
-# 🧪 Testing & Behavior
-This role uses:
- - ansible.windows.win_wait_for
- - No domain joins, no reboots, no shell calls
- - Fast return once port 389 is ready
- - Compatible with check mode, dry runs, and all Ludus orchestration features
+  - vm_name: "{{ range_id }}-SOME-OTHER-VM"
+    # ... other vm config
+    roles:
+      - name: some_other_role
+        # This ensures 'some_other_role' does not run until
+        # PARENT-DC1 has passed its LDAP readiness check.
+        depends_on:
+          - vm_name: "{{ range_id }}-PARENT-DC1"
+            role: ludus_verify_dc_ready
+```
 
 ---
 
-# 📎 License
- - MIT © H4cksty
+## 🔧 Variables
+
+This role has no **required** variables. All variables are optional and have default values.
+
+### Optional
+
+These variables have default values defined in `defaults/main.yml`.
+
+| Variable       | Default | Description                                       |
+| -------------- | ------- | ------------------------------------------------- |
+| `ldap_port`    | `389`   | The TCP port to check for LDAP service availability. |
+| `ldap_timeout` | `300`   | The maximum time in seconds to wait for the port. |
+| `ldap_delay`   | `15`    | The delay in seconds before starting the check.   |
 
 ---
 
-## 💡 Pro Tip
+## ✅ Behavior
 
-Use this role liberally. It acts as a superlight safety harness between any roles that rely on a DC being online—especially in race-prone environments like nested domain joins, replication trusts, or FSMO ops.
+- Pauses Ansible execution on the target host.
+- Repeatedly checks if the specified `ldap_port` is open.
+- Continues the deployment once the port is available or fails if the `ldap_timeout` is reached.
+
+---
+
+## 📎 License
+
+MIT © H4cksty
