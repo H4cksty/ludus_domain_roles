@@ -106,15 +106,14 @@ ludus:
     role_vars:
       # --- Required Role Variables ---
       dns_domain_name: "child.parent.local"
-      parent_domain_netbios_name: "PARENT"
+      parent_domain_fqdn: "parent.local"
       parent_dc_ip: "10.2.10.10" # Use the IP of the parent DC
       
       # Pass credentials using the anchor
       <<: *credentials
       
       # --- Optional Role Variables (overriding defaults) ---
-      # --- Dynamically Set Variable ---
-      site_name: "{{ (dns_domain_name.split('.')[0]).upper() }}-Site"
+      site_name: "CHILD-Site"
 ```
 ---
 
@@ -125,7 +124,7 @@ ludus:
 | Variable                       | Description                                                  | Example                        |
 | ------------------------------ | ------------------------------------------------------------ | ------------------------------ |
 | `dns_domain_name`              | FQDN of the new child domain.                                | `child.parent.local`           |
-| `parent_domain_netbios_name`   | NETBIOS name of the parent domain.                           | `PARENT`                       |
+| `parent_domain_fqdn`           | FQDN of the parent domain.                                   | `parent.local`                 |
 | `parent_dc_ip`                 | IP address of a Domain Controller in the parent domain.      | `10.2.10.10`                   |
 | `ad_domain_admin`              | Admin UPN with Enterprise Admins or Domain Admins of the forest root permissions. | `Administrator@parent.local`   |
 | `ad_domain_admin_password`     | Password for the forest-level admin account.                 | `"ChangeMe123!"`               |
@@ -139,7 +138,6 @@ These variables have default values defined in `defaults/main.yml`.
 | Variable         | Default                     | Description                                       |
 | ---------------- | --------------------------- | ------------------------------------------------- |
 | `site_name`      | `"Default-First-Site-Name"` | AD site name where this DC will be placed.        |
-| `dns_delegation` | `no`                        | Whether to create a DNS delegation in the parent. |
 | `ldap_port`      | `389`                       | Port for the LDAP readiness check.                |
 | `ldap_timeout`   | `300`                       | Max time in seconds to wait for LDAP to be ready. |
 | `ldap_delay`     | `15`                        | Delay in seconds before starting LDAP checks.     |
