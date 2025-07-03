@@ -67,9 +67,8 @@
     state: present
     groups:
       add: 
-        - "{{ item.groups }}"
-
+        - "{{ item.group }}"
   loop:
-    - { name: "Clark, Ben", username: "domainadmin", password: "{{ ad_domain_admin_password }}", groups: ["Domain Admins"] }
-    - { name: "Benson, Jeff", username: "domainuser",  password: "{{ ad_domain_user_password }}",  groups: ["Domain Users"] }
+    - { name: "Clark, Ben", username: "domainadmin", password: "{{ ad_domain_admin_password }}", group: "Domain Admins" }
+    - { name: "Benson, Jeff", username: "domainuser",  password: "{{ ad_domain_user_password }}",  group: "Domain Users" }
   #no_log: true
