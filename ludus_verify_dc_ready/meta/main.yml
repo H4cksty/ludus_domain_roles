@@ -4,9 +4,8 @@
 ---
 galaxy_info:
   role_name: ludus_verify_dc_ready
-  author: Matt Hasty
-  company: kfivefour
-  description: A minimal role to verify a Domain Controller's AD services are responsive.
+  author: H4cksty
+  description: Waits for a Domain Controller to be ready by probing LDAP (port 389).
   license: MIT
   min_ansible_version: "2.9"
   platforms:
@@ -23,4 +22,5 @@ galaxy_info:
 
 dependencies: []
 
-collections: []
+collections:
+  - ansible.windows
