@@ -2,41 +2,65 @@
 # File: ludus_create_child_domain/tasks/main.yml
 # =======================================================================
 ---
-- name: Configure DNS to include parent dc ip
-  win_dns_client:
-    adapter_names: "*"
-    ipv4_addresses:
-      - "{{ parent_dc_ip }}"
-      - "{{ ansible_host }}"
+- name: Validate required input
+  assert:
+    that:
+      - dns_domain_name is defined
+      - parent_domain_netbios_name is defined
+      - parent_dc_ip is defined
+      - ad_domain_admin is defined
+      - ad_domain_admin_password is defined
+      - ad_domain_safe_mode_password is defined
+      - ad_domain_user_password is defined
+    fail_msg: "Missing required domain configuration or credential variable(s)."
 
-- name: Create a child domain
-  microsoft.ad.domain_child:
+- name: Install AD DS role
+  ansible.windows.win_feature:
+    name: AD-Domain-Services
+    state: present
+  register: ad_role
+  check_mode: no
+
+- name: Reboot after feature install (if required)
+  ansible.windows.win_reboot:
+    reboot_timeout: 600
+  when: ad_role.reboot_required
+
+- name: Promote this server to a child Domain Controller
+  ansible.windows.win_domain:
     dns_domain_name: "{{ dns_domain_name }}"
-    domain_admin_user: "{{ domain_admin_user }}"
-    domain_admin_password: "{{ domain_admin_password }}"
-    safe_mode_password: "{{ safe_mode_password }}"
-    create_dns_delegation: "{{ create_dns_delegation }}"
-    domain_mode: "{{ domain_mode }}"
-    reboot: "{{ reboot }}"
-    install_dns: "{{ install_dns }}"
+    parent_domain_name: "{{ parent_domain_netbios_name }}"
+    parent_server: "{{ parent_dc_ip }}"
+    domain_admin_user: "{{ ad_domain_admin }}"
+    domain_admin_password: "{{ ad_domain_admin_password }}"
+    safe_mode_password: "{{ ad_domain_safe_mode_password }}"
+    site_name: "{{ site_name }}"
+    dns_delegation: "{{ dns_delegation }}"
+    state: domain
+    reboot: no
+  register: promotion
+  check_mode: no
 
-# After the reboot from the previous task, the machine is a DC.
-# Now, create the standard Ludus user accounts in the new child domain.
+- name: Reboot after child domain promotion (if required)
+  ansible.windows.win_reboot:
+    reboot_timeout: 900
+  when: promotion.reboot_required
 
-- name: Create the 'domainadmin' user
-  microsoft.ad.user:
-    name: "{{ ad_domain_admin }}"
-    password: "{{ domain_admin_password }}"
-    groups:
-      - "Domain Admins"
-      - "Administrators"
+- name: Wait for LDAP port {{ ldap_port }} to become available
+  ansible.windows.win_wait_for:
+    port: "{{ ldap_port }}"
+    host: "{{ ansible_default_ipv4.address }}"
+    delay: "{{ ldap_delay }}"
+    timeout: "{{ ldap_timeout }}"
+
+- name: Create default domainadmin and domainuser accounts
+  ansible.windows.win_domain_user:
+    name: "{{ item.username }}"
+    password: "{{ item.password }}"
+    user_principal_name: "{{ item.username }}@{{ dns_domain_name }}"
+    groups: "{{ item.groups }}"
     state: present
-
-- name: Create the 'domainuser' user
-  microsoft.ad.user:
-    name: "{{ ad_domain_user }}"
-    password: "{{ domain_user_password }}"
-    groups:
-      - "Domain Users"
-      - "Remote Desktop Users"
-    state: present
+  loop:
+    - { username: "domainadmin", password: "{{ ad_domain_admin_password }}", groups: "Domain Admins" }
+    - { username: "domainuser",  password: "{{ ad_domain_user_password }}",  groups: "Domain Users" }
+  when: promotion.changed
