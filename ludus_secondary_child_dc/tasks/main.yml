@@ -2,28 +2,51 @@
 # File: ludus_secondary_child_dc/tasks/main.yml
 # =======================================================================
 ---
-- name: Wait for the Primary Child DC to be ready for authentication
-  ansible.builtin.wait_for:
-    host: "{{ existing_dc_ip }}"
-    port: 389 # check for LDAP so we know DC services are running
-    timeout: 300 # wait up to 5 minutes
-  delegate_to: localhost
+- name: Validate required variables
+  assert:
+    that:
+      - dns_domain_name is defined
+      - parent_domain_netbios_name is defined
+      - existing_dc_ip is defined
+      - ad_domain_admin is defined
+      - ad_domain_admin_password is defined
+      - ad_domain_safe_mode_password is defined
+    fail_msg: "Missing required domain configuration or credential variable(s)."
 
-- name: Set DNS client to point to the existing Primary Child DC
-  win_dns_client:
-    adapter_names: "*"
-    dns_servers:
-      - "{{ existing_dc_ip }}"
+- name: Install AD DS role
+  ansible.windows.win_feature:
+    name: AD-Domain-Services
+    state: present
+  register: ad_role
+  check_mode: no
 
-- name: Promote to additional Domain Controller in existing domain
-  microsoft.ad.domain_controller:
-    dns_domain_name: "{{ dns_domain_name }}"
-    domain_admin_user: "{{ domain_admin_user }}"
-    domain_admin_password: "{{ domain_admin_password }}"
-    safe_mode_password: "{{ safe_mode_password }}"
-    install_dns: "{{ install_dns }}"
-    state: "{{ state }}"
-
-- name: Reboot the server after domain promotion
+- name: Reboot after feature install (if required)
   ansible.windows.win_reboot:
-  when: reboot
+    reboot_timeout: 600
+  when: ad_role.reboot_required
+
+- name: Promote to secondary DC in child domain
+  ansible.windows.win_domain_controller:
+    dns_domain_name: "{{ dns_domain_name }}"
+    domain_admin_user: "{{ ad_domain_admin }}"
+    domain_admin_password: "{{ ad_domain_admin_password }}"
+    safe_mode_password: "{{ ad_domain_safe_mode_password }}"
+    site_name: "{{ site_name }}"
+    dns_delegation: "{{ dns_delegation }}"
+    replica: yes
+    domain_controller_ip: "{{ existing_dc_ip }}"
+    reboot: no
+  register: promotion
+  check_mode: no
+
+- name: Reboot after promotion (if required)
+  ansible.windows.win_reboot:
+    reboot_timeout: 900
+  when: promotion.reboot_required
+
+- name: Wait for LDAP port {{ ldap_port }} to become available
+  ansible.windows.win_wait_for:
+    port: "{{ ldap_port }}"
+    host: "{{ ansible_default_ipv4.address }}"
+    delay: "{{ ldap_delay }}"
+    timeout: "{{ ldap_timeout }}"
