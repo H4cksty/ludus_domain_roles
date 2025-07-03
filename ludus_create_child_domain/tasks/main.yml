@@ -1,3 +1,9 @@
+# =======================================================================
+# File: ludus_create_child_domain/tasks/main.yml
+# Description: This role creates a new child domain in an existing AD forest.
+# Security Note: 'no_log: true' is used on tasks handling credentials
+#                to prevent them from being exposed in logs upon failure.
+# =======================================================================
 ---
 - name: Validate required input
   assert:
@@ -10,7 +16,6 @@
       - ad_domain_safe_mode_password is defined
       - ad_domain_user_password is defined
     fail_msg: "Missing required domain configuration or credential variable(s)."
-    # This task does not handle secrets directly, so no_log is not needed.
 
 - name: Install AD DS role
   ansible.windows.win_feature:
@@ -25,10 +30,10 @@
   when: ad_role.reboot_required
 
 - name: Promote this server to a child Domain Controller
-  ansible.windows.win_domain:
+  microsoft.ad.domain:
     dns_domain_name: "{{ dns_domain_name }}"
-    parent_domain_name: "{{ parent_domain_netbios_name }}"
-    parent_server: "{{ parent_dc_ip }}"
+    parent_domain_netbios_name: "{{ parent_domain_netbios_name }}"
+    parent_domain_controller: "{{ parent_dc_ip }}"
     domain_admin_user: "{{ ad_domain_admin }}@{{ dns_domain_name }}"
     domain_admin_password: "{{ ad_domain_admin_password }}"
     safe_mode_password: "{{ ad_domain_safe_mode_password }}"
@@ -38,7 +43,7 @@
     reboot: no
   register: promotion
   check_mode: no
-  no_log: true  # <-- CRITICAL: Prevents passwords from being logged on failure.
+  no_log: true
 
 - name: Reboot after child domain promotion (if required)
   ansible.windows.win_reboot:
@@ -48,13 +53,13 @@
 - name: Wait for LDAP port {{ ldap_port }} to become available
   ansible.windows.win_wait_for:
     port: "{{ ldap_port }}"
-    host: "{{ ansible_default_ipv4.address }}"
+    host: "{{ ansible_host }}"
     delay: "{{ ldap_delay }}"
     timeout: "{{ ldap_timeout }}"
 
 - name: Create default domainadmin and domainuser accounts
-  ansible.windows.win_domain_user:
-    name: "{{ item.username }}"
+  microsoft.ad.user:
+    identity: "{{ item.username }}"
     password: "{{ item.password }}"
     user_principal_name: "{{ item.username }}@{{ dns_domain_name }}"
     groups: "{{ item.groups }}"
@@ -63,4 +68,4 @@
     - { username: "domainadmin", password: "{{ ad_domain_admin_password }}", groups: "Domain Admins" }
     - { username: "domainuser",  password: "{{ ad_domain_user_password }}",  groups: "Domain Users" }
   when: promotion.changed
-  no_log: true # <-- CRITICAL: Prevents passwords from being logged on failure.
+  no_log: true
