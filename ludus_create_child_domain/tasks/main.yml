@@ -9,7 +9,7 @@
   assert:
     that:
       - dns_domain_name is defined
-      - parent_domain_name is defined
+      - parent_dc_ip is defined
       - ad_domain_admin is defined
       - ad_domain_admin_password is defined
       - ad_domain_safe_mode_password is defined
@@ -34,8 +34,15 @@
     domain_admin_password: "{{ ad_domain_admin_password }}"
     safe_mode_password: "{{ ad_domain_safe_mode_password }}"
     install_dns: true
-    reboot: true
+    reboot: no
   register: promotion
+  check_mode: no
+#  no_log: true
+
+- name: Reboot after child domain promotion (if required)
+  ansible.windows.win_reboot:
+    reboot_timeout: 900
+  when: promotion.reboot_required
 
 - name: Wait for LDAP port {{ ldap_port }} to become available
   ansible.windows.win_wait_for:
@@ -53,6 +60,7 @@
     state: present
   loop:
     - { username: "domainadmin", password: "{{ ad_domain_admin_password }}", groups: "Domain Admins", firstname: "Ben", surname: "Clark" }
-    - { username: "domainuser",  password: "{{ ad_domain_user_password }}",  groups: "Domain Users", firstname: "Jeff", surname: "Benson" }
+    - { username: "domainuser",  password: "{{ ad_domain_user_password }}",  groups: "Domain Users" , firstname: "Jeff", surname: "Benson"}
   when: promotion.changed
 #  no_log: true
+
