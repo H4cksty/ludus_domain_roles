@@ -1,24 +1,17 @@
-# =======================================================================
-# File: ludus_create_child_domain/defaults/main.yml
-# =======================================================================
+# defaults/main.yml for the ludus_create_child_domain role
 ---
-# All variables for this role are expected to be passed via role_vars
-# in the main ludus-config.yml for maximum clarity.
+# The name of the Active Directory site to create.
+site_name: "Default-First-Site-Name"
 
-# Variables for domain creation
-dns_domain_name: ""
-parent_dc_ip: ""
-domain_admin_user: ""
-safe_mode_password: ""
-domain_mode: ""
+# Whether to create a DNS delegation in the parent zone.
+# This is often not needed when the parent zone is AD-integrated.
+dns_delegation: no
 
-# Variables for user creation
-ad_domain_admin: ""
-domain_admin_password: ""
-ad_domain_user: ""
-domain_user_password: ""
+# The port to check for LDAP service availability.
+ldap_port: 389
 
-# Other role settings
-create_dns_delegation: true
-install_dns: true
-reboot: true
+# The delay in seconds before starting to check for the LDAP port.
+ldap_delay: 15
+
+# The timeout in seconds for the LDAP port check.
+ldap_timeout: 300
