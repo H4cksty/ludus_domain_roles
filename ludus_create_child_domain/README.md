@@ -27,7 +27,7 @@ Before using this role, ensure the following requirements are met:
 
 ## 📌 Example — `ludus-config.yml`
 
-This example demonstrates the correct structure for a Ludus configuration file, using `global_role_vars` and `defaults` as separate top-level blocks. YAML anchors are used to define credentials once and reuse them, keeping the configuration clean and easy to manage.
+This example demonstrates the correct structure for a Ludus configuration file. Note that `roles` and `role_vars` are sibling keys under the VM definition.
 
 ```yaml
 # Wide open networking for setup, troubleshooting, and downloading tools
@@ -37,29 +37,39 @@ network:
 
 # global_role_vars is a top-level block for defining reusable variables.
 global_role_vars:
+  # The first set of variables are "namespaced" to prevent 
   credentials: &credentials
     ad_domain_admin: "domainadmin"
     ad_domain_admin_password: "ChangeMe123!"
-    ad_domain_safe_mode_password: "SafeModePwd!"
     ad_domain_user: "domainuser"
     ad_domain_user_password: "UserUserPwd!"
+    ad_domain_safe_mode_password: "SafeModePwd!"
   functional_level: &functional_level "Win2012R2"
   windows_hw_defaults: &windows_hw_defaults
     ram_min_gb: 1
     ram_gb: 8
     cpus: 4
-  # These Variables will be passed to all VMs (overriding the defaults)
+  linux_hw_defaults: &linux_hw_defaults
+    ram_min_gb: 1
+    ram_gb: 2
+    cpus: 1
+  # The Below Variables will be utilized by all VMs (overriding the defaults)
+  # Assigning these manually under the VM SHOULD override this... needs testing
+  # Should this VM be a full clone (true) or linked clone (false). Default: false
   full_clone: false
+  # Testing mode for VMs: $ ludus testing start/stop
+  testing:
+    snapshot: true          # Snapshot this VM going into testing, and revert it coming out of testing. Default: true
+    block_internet: true    # Cut this VM off from the internet during testing. Default true
 
 # The 'defaults' block sets global values required by the Ludus schema.
 defaults:
-  # I'm using the yaml merge key 
-  <<: *credentials
-  ad_forest_functional_level: *functional_level
-  ad_domain_functional_level: *functional_level
-  timezone: "America/Chicago"
-  stale_hours: 0
   snapshot_with_RAM: false
+  stale_hours: 0
+  ad_domain_functional_level: *functional_level
+  ad_forest_functional_level: *functional_level
+  <<: *credentials
+  timezone: "America/Chicago"
   enable_dynamic_wallpaper: true
 
 # The main ludus block defining the VMs.
