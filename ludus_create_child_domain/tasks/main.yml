@@ -1,6 +1,3 @@
-# =======================================================================
-# File: ludus_create_child_domain/tasks/main.yml
-# =======================================================================
 ---
 - name: Validate required input
   assert:
@@ -13,6 +10,7 @@
       - ad_domain_safe_mode_password is defined
       - ad_domain_user_password is defined
     fail_msg: "Missing required domain configuration or credential variable(s)."
+    # This task does not handle secrets directly, so no_log is not needed.
 
 - name: Install AD DS role
   ansible.windows.win_feature:
@@ -31,7 +29,7 @@
     dns_domain_name: "{{ dns_domain_name }}"
     parent_domain_name: "{{ parent_domain_netbios_name }}"
     parent_server: "{{ parent_dc_ip }}"
-    domain_admin_user: "{{ ad_domain_admin }}"
+    domain_admin_user: "{{ ad_domain_admin }}@{{ dns_domain_name }}"
     domain_admin_password: "{{ ad_domain_admin_password }}"
     safe_mode_password: "{{ ad_domain_safe_mode_password }}"
     site_name: "{{ site_name }}"
@@ -40,6 +38,7 @@
     reboot: no
   register: promotion
   check_mode: no
+  no_log: true  # <-- CRITICAL: Prevents passwords from being logged on failure.
 
 - name: Reboot after child domain promotion (if required)
   ansible.windows.win_reboot:
@@ -64,3 +63,4 @@
     - { username: "domainadmin", password: "{{ ad_domain_admin_password }}", groups: "Domain Admins" }
     - { username: "domainuser",  password: "{{ ad_domain_user_password }}",  groups: "Domain Users" }
   when: promotion.changed
+  no_log: true # <-- CRITICAL: Prevents passwords from being logged on failure.
