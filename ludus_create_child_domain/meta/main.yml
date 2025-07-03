@@ -25,7 +25,7 @@ collections:
   - ansible.windows
   - microsoft.ad
 
-dependencies:
-  # This role requires that the parent domain controller is verified
-  # to be ready before attempting to create a child domain.
-  - role: ludus_verify_dc_ready
+# This role does NOT have other role dependencies that must run on the same
+# host. The dependency on the parent DC being ready is handled by the
+# 'depends_on' key in the ludus-config.yml, not here.
+dependencies: []
