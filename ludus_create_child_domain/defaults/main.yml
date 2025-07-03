@@ -1,7 +1,7 @@
 # defaults/main.yml for the ludus_create_child_domain role
 ---
 # The name of the Active Directory site to create.
-site_name: "Default-First-Site-Name"
+# site_name: "Default-First-Site-Name"
 
 # Whether to create a DNS delegation in the parent zone.
 # This is often not needed when the parent zone is AD-integrated.
