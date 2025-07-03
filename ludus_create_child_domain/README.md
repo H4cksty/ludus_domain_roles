@@ -21,7 +21,7 @@ Before using this role, ensure the following requirements are met:
     ludus ansible collection add ansible.windows
     ludus ansible collection add microsoft.ad
     ```
-2.  **Role Dependency:** This role depends on `ludus_verify_dc_ready`. The `meta/main.yml` file handles this dependency automatically, so Ansible will ensure the parent DC is ready before this role runs.
+2.  **Cross-VM Dependency:** This role requires that the parent domain controller is fully operational before it runs. This dependency **must** be managed using the `depends_on` key in your `ludus-config.yml`, as shown in the example. This prevents a race condition by ensuring the parent DC is ready before the child DC promotion begins.
 
 ---
 
