@@ -36,7 +36,6 @@ network:
   external_default: ACCEPT
 
 # global_role_vars is a top-level block for defining reusable variables.
-# Placing variables w/ yaml anchors for passing to ansible roles and other fields not allowed in Ludus "defaults:" block.
 global_role_vars:
   credentials: &credentials
     ad_domain_admin: "domainadmin"
@@ -44,27 +43,18 @@ global_role_vars:
     ad_domain_safe_mode_password: "SafeModePwd!"
     ad_domain_user: "domainuser"
     ad_domain_user_password: "UserUserPwd!"
-  functional_level: &functional_level "Win2012R2"  # using yaml anchor for this one since it sometimes is required by ansible roles.
+  functional_level: &functional_level "Win2012R2"
   windows_hw_defaults: &windows_hw_defaults
     ram_min_gb: 1
     ram_gb: 8
     cpus: 4
-  windows_key_defaults: &windows_key_defaults  # use this if you'll have the same config on a lot of win vms
-    sysprep: true
-    chocolatey_ignore_checksums: false # Set to true to ignore any checksum errors when installing chocolatey packages (for packages that are 3rd party hosted and update before the choco package hash updates). Default: false
-    chocolatey_packages:
-      - vscodium                # An array of chocolatey package names you'd like installed on this VM. Default: none
-    office_version: 2019        # The Microsoft office version you would like installed on this VM (2013|2016|2019|2021). Default: undefined (don't install office)
-    office_arch: 64bit          # The architecture for the Microsoft office install (64bit|32bit)
-    visual_studio_version: 2019 # The version of Microsoft Visual Studio to install (community edition). Note: 2022 cannot target < .NET 4.5. Default: undefined (don't install visual studio)
-    #autologon_user: myuser      # The username to use for autologon. Default: localuser unless domain joined, then default.ad_domain_user
-    #autologon_password: mypass  # The password to use for autologon. Default: password unless domain joined, then default.ad_domain_user_password
+  # These Variables will be passed to all VMs (overriding the defaults)
+  full_clone: false
 
 # The 'defaults' block sets global values required by the Ludus schema.
 defaults:
-  # Use the YAML merge key (<<) to include the credentials anchor.
+  # I'm using the yaml merge key 
   <<: *credentials
-  # These fields are required by the Ludus 'defaults' schema.
   ad_forest_functional_level: *functional_level
   ad_domain_functional_level: *functional_level
   timezone: "America/Chicago"
@@ -77,7 +67,6 @@ ludus:
   - vm_name: "{{ range_id }}-PARENT-DC1"
     hostname: "PARENT-DC1"
     template: win2019-server-x64-template
-    # Use yaml merge key to set ram and cpu
     <<: *windows_hw_defaults
     windows:
       sysprep: true
@@ -87,10 +76,7 @@ ludus:
       fqdn: "parent.local"
       role: "primary-dc"
     roles:
-      # This role is used as a dependency check by the child DC.
       - name: ludus_verify_dc_ready
-        vars:
-          ldap_timeout: 300
 
   - vm_name: "{{ range_id }}-CHILD-DC1"
     hostname: "CHILD-DC1"
@@ -101,25 +87,24 @@ ludus:
     vlan: 20
     ip_last_octet: 10
     roles:
-      # This role also validates that the newly created DC is operational to prevent race conditions when adding domain members or alternate DCs.
       - name: ludus_create_child_domain
-        # This 'depends_on' block ensures this role only runs AFTER
-        # the parent DC is verified to be ready.
         depends_on:
           - vm_name: "{{ range_id }}-PARENT-DC1"
             role: ludus_verify_dc_ready
-        vars:
-          # --- Required Role Variables ---
-          dns_domain_name: "child.parent.local"
-          parent_domain_netbios_name: "PARENT"
-          parent_dc_ip: "10.2.10.10" # Use the IP of the parent DC
-          # Use the YAML merge key (<<) to pass the credentials to the role.
-          <<: *credentials
-          # --- Optional Role Variables (overriding defaults) ---
-          # --- Dynamically Set Variable ---
-          # This takes the first part of the dns_domain_name (child),
-          # capitalizes it (CHILD), and adds "-Site".
-          site_name: "{{ (dns_domain_name.split('.')[0]).upper() }}-Site"
+    # 'role_vars' is at the same level as 'roles', 'vlan', etc.
+    # Its contents are passed to all roles listed above for this VM.
+    role_vars:
+      # --- Required Role Variables ---
+      dns_domain_name: "child.parent.local"
+      parent_domain_netbios_name: "PARENT"
+      parent_dc_ip: "10.2.10.10" # Use the IP of the parent DC
+      
+      # Pass credentials using the anchor
+      <<: *credentials
+      
+      # --- Optional Role Variables (overriding defaults) ---
+      # --- Dynamically Set Variable ---
+      site_name: "{{ (dns_domain_name.split('.')[0]).upper() }}-Site"
 ```
 ---
 
