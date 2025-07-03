@@ -1,15 +1,24 @@
 # =======================================================================
 # File: ludus_verify_dc_ready/tasks/main.yml
+# Description: This task file acts as a readiness probe for a Domain
+#              Controller. It is used as a dependency check to ensure
+#              a DC's services are available before other roles attempt
+#              to interact with it.
 # =======================================================================
 ---
-- name: Wait for LDAP port {{ ldap_port }} to become available
+- name: Wait for Domain Controller LDAP port ({{ ldap_port }}) to become available
   ansible.windows.win_wait_for:
+    # The port to check for. LDAP (389) is a reliable indicator
+    # that Active Directory Domain Services are running.
     port: "{{ ldap_port }}"
-    host: "{{ ansible_default_ipv4.address }}"
-    delay: "{{ ldap_delay }}"
-    timeout: "{{ ldap_timeout }}"
-  register: ldap_check
 
-- name: Debug LDAP readiness result
-  debug:
-    var: ldap_check
+    # 'ansible_default_ipv4.address' is a magic variable that resolves
+    # to the IP address of the host this task is running on.
+    host: "{{ ansible_default_ipv4.address }}"
+
+    # Delay before starting the check. This gives services time to
+    # initialize after a reboot.
+    delay: "{{ ldap_delay }}"
+
+    # The maximum time to wait for the port to become available.
+    timeout: "{{ ldap_timeout }}"
