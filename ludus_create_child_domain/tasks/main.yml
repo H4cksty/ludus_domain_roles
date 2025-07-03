@@ -43,7 +43,7 @@
     reboot: no
   register: promotion
   check_mode: no
-  no_log: true
+  #no_log: true
 
 - name: Reboot after child domain promotion (if required)
   ansible.windows.win_reboot:
@@ -68,4 +68,4 @@
     - { username: "domainadmin", password: "{{ ad_domain_admin_password }}", groups: "Domain Admins" }
     - { username: "domainuser",  password: "{{ ad_domain_user_password }}",  groups: "Domain Users" }
   when: promotion.changed
-  no_log: true
+  #no_log: true
