@@ -42,7 +42,6 @@ network:
 #   YAML anchors added for modularity and groupings.
 #================================================================================
 global_role_vars:
-  # The first set of variables are "namespaced" to prevent 
   credentials: &credentials
     ad_domain_admin: "domainadmin"
     ad_domain_admin_password: "ChangeMe123!"
