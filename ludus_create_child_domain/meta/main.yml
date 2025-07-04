@@ -15,10 +15,11 @@ galaxy_info:
         - '2019'
         - '2022'
   galaxy_tags:
-    - active_directory
     - windows
+    - security
+    - active_directory
+    - server
     - ludus
-    - domain
 
 # This key lists all the Ansible Collections this role depends on.
 collections:
