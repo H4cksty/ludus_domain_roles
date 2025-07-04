@@ -6,7 +6,6 @@
   assert:
     that:
       - dns_domain_name is defined
-      - parent_domain_netbios_name is defined
       - existing_dc_ip is defined
       - ad_domain_admin is defined
       - ad_domain_admin_password is defined
@@ -29,9 +28,8 @@
   ansible.windows.win_domain_controller:
     dns_domain_name: "{{ dns_domain_name }}"
     domain_admin_user: "{{ ad_domain_admin }}"
-    domain_admin_password: "{{ ad_domain_admin_password }}"
+    domain_admin_password: "{{ ad_domain_admin_password }}@{{ dns_domain_name }}"
     safe_mode_password: "{{ ad_domain_safe_mode_password }}"
-    site_name: "{{ site_name }}"
     dns_delegation: "{{ dns_delegation }}"
     replica: yes
     domain_controller_ip: "{{ existing_dc_ip }}"
