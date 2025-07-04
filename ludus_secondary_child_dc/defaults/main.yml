@@ -9,4 +9,4 @@ dns_delegation: false
 # LDAP readiness check
 ldap_port: 389
 ldap_timeout: 300
-ldap_delay: 10
+ldap_delay: 15
