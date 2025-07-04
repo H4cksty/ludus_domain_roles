@@ -8,7 +8,7 @@ Creates a new child Active Directory domain in an existing forest and promotes t
 
 This role is intended for use on a Windows VM that will become the first DC of a new child domain. It automates the entire provisioning process, from installing the required Windows features to creating default user accounts.
 
-It is designed to be idempotent and safe to run multiple times. Passwords and other secrets are handled securely and will not be logged.
+It is designed to be idempotent and safe to run multiple times. Passwords and other secrets are handled securely and will not be logged during production runs (by re-enabling `no_log: true`).
 
 ---
 
@@ -30,12 +30,17 @@ Before using this role, ensure the following requirements are met:
 This example demonstrates the correct structure for a Ludus configuration file. Note that `roles` and `role_vars` are sibling keys under the VM definition.
 
 ```yaml
+#================================================================================
 # Wide open networking for setup, troubleshooting, and downloading tools
+#================================================================================
 network:
   inter_vlan_default: ACCEPT
   external_default: ACCEPT
 
-# global_role_vars is a top-level block for defining reusable variables.
+#================================================================================
+#   Global vars... are global, even in user-defined-roles. "Namespaced" and 
+#   YAML anchors added for modularity and groupings.
+#================================================================================
 global_role_vars:
   # The first set of variables are "namespaced" to prevent 
   credentials: &credentials
@@ -57,12 +62,13 @@ global_role_vars:
   # Assigning these manually under the VM SHOULD override this... needs testing
   # Should this VM be a full clone (true) or linked clone (false). Default: false
   full_clone: false
-  # Testing mode for VMs: $ ludus testing start/stop
   testing:
     snapshot: true          # Snapshot this VM going into testing, and revert it coming out of testing. Default: true
     block_internet: true    # Cut this VM off from the internet during testing. Default true
 
-# The 'defaults' block sets global values required by the Ludus schema.
+#================================================================================
+#   Default must All be declared if any are.
+#================================================================================
 defaults:
   snapshot_with_RAM: false
   stale_hours: 0
@@ -72,12 +78,14 @@ defaults:
   timezone: "America/Chicago"
   enable_dynamic_wallpaper: true
 
-# The main ludus block defining the VMs.
+#================================================================================
+#   The VMS!!!!
+#================================================================================
 ludus:
   - vm_name: "{{ range_id }}-PARENT-DC1"
     hostname: "PARENT-DC1"
     template: win2019-server-x64-template
-    <<: *windows_hw_defaults
+    <<: *windows_hw_defaults  # single line for vars that will be duplicated
     windows:
       sysprep: true
     vlan: 10
@@ -86,7 +94,7 @@ ludus:
       fqdn: "parent.local"
       role: "primary-dc"
     roles:
-      - name: ludus_verify_dc_ready
+      - name: ludus_verify_dc_ready  # make sure the dc is running before others try to connect
 
   - vm_name: "{{ range_id }}-CHILD-DC1"
     hostname: "CHILD-DC1"
