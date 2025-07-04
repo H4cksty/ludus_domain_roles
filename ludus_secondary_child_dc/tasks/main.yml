@@ -1,5 +1,7 @@
 # =======================================================================
 # File: ludus_secondary_child_dc/tasks/main.yml
+# Description: This role adds a replica (secondary) Domain Controller
+#              to an existing domain in the forest.
 # =======================================================================
 ---
 - name: Validate required variables
@@ -15,7 +17,6 @@
 - name: Install AD DS role
   ansible.windows.win_feature:
     name: AD-Domain-Services
-    state: present
   register: ad_role
   check_mode: no
 
@@ -24,18 +25,27 @@
     reboot_timeout: 600
   when: ad_role.reboot_required
 
-- name: Promote to secondary DC in child domain
-  ansible.windows.win_domain_controller:
+- name: Configure DNS to resolve existing domain before promotion
+  ansible.windows.win_dns_client:
+    adapter_names: "*"
+    ipv4_addresses:
+      - "{{ existing_dc_ip }}"
+      - "127.0.0.1" # Also include loopback for when this becomes a DC
+
+- name: Promote this server to a replica Domain Controller
+  microsoft.ad.domain_controller:
     dns_domain_name: "{{ dns_domain_name }}"
-    domain_admin_user: "{{ ad_domain_admin }}"
-    domain_admin_password: "{{ ad_domain_admin_password }}@{{ dns_domain_name }}"
+    domain_admin_user: "{{ ad_domain_admin }}@{{ dns_domain_name }}"
+    domain_admin_password: "{{ ad_domain_admin_password }}"
     safe_mode_password: "{{ ad_domain_safe_mode_password }}"
-    dns_delegation: "{{ dns_delegation }}"
-    replica: yes
-    domain_controller_ip: "{{ existing_dc_ip }}"
+    site_name: "{{ site_name }}"
+    state: domain_controller # The module infers it's a replica because the domain exists
+    replication_source_dc: "{{ existing_dc_ip }}"
+    install_dns: true
     reboot: no
   register: promotion
   check_mode: no
+  #no_log: true # Commented out for debugging, per user preference
 
 - name: Reboot after promotion (if required)
   ansible.windows.win_reboot:
@@ -45,6 +55,6 @@
 - name: Wait for LDAP port {{ ldap_port }} to become available
   ansible.windows.win_wait_for:
     port: "{{ ldap_port }}"
-    host: "{{ ansible_default_ipv4.address }}"
+    host: "{{ ansible_host }}"
     delay: "{{ ldap_delay }}"
     timeout: "{{ ldap_timeout }}"
