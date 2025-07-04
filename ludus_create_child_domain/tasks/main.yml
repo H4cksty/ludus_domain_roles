@@ -8,7 +8,7 @@
 - name: Validate required input
   assert:
     that:
-      - dns_domain_name is defined
+      - new_child_fqdn is defined
       - parent_dc_ip is defined
       - ad_domain_admin is defined
       - ad_domain_admin_password is defined
@@ -36,8 +36,8 @@
   
 - name: Promote this server to a child Domain Controller
   microsoft.ad.domain_child:
-    dns_domain_name: "{{ dns_domain_name }}"
-    domain_admin_user: "{{ ad_domain_admin }}@{{ dns_domain_name.split('.')[1:] | join('.') }}"
+    dns_domain_name: "{{ new_child_fqdn }}"
+    domain_admin_user: "{{ ad_domain_admin }}@{{ new_child_fqdn.split('.')[1:] | join('.') }}"
     domain_admin_password: "{{ ad_domain_admin_password }}"
     safe_mode_password: "{{ ad_domain_safe_mode_password }}"
     install_dns: true
@@ -58,17 +58,17 @@
     delay: "{{ ldap_delay }}"
     timeout: "{{ ldap_timeout }}"
 
-- name: Create default domainadmin and domainuser accounts
-  microsoft.ad.user:
-    name: "{{ item.name }}"
-    sam_account_name: "{{ item.username }}"
-    password: "{{ item.password }}"
-    upn: "{{ item.username }}@{{ dns_domain_name }}"
-    state: present
-    groups:
-      add: 
-        - "{{ item.group }}"
-  loop:
-    - { name: "Clark, Ben", username: "domainadmin", password: "{{ ad_domain_admin_password }}", group: "Domain Admins" }
-    - { name: "Benson, Jeff", username: "domainuser",  password: "{{ ad_domain_user_password }}",  group: "Domain Users" }
-  #no_log: true
+#- name: Create default domainadmin and domainuser accounts <--- unnecessary for how I'm changing the config
+#  microsoft.ad.user:
+#    name: "{{ item.name }}"
+#    sam_account_name: "{{ item.username }}"
+#    password: "{{ item.password }}"
+#    upn: "{{ item.username }}@{{ dns_domain_name }}"
+#    state: present
+#    groups:
+#      add: 
+#        - "{{ item.group }}"
+#  loop:
+#    - { name: "Clark, Ben", username: "domainadmin", password: "{{ ad_domain_admin_password }}", group: "Domain Admins" }
+#    - { name: "Benson, Jeff", username: "domainuser",  password: "{{ ad_domain_user_password }}",  group: "Domain Users" }
+#  no_log: true
